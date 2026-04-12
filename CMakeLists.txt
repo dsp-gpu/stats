@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
-project(DspStats VERSION 0.1.0 LANGUAGES CXX HIP)
+project(DspStats VERSION 0.1.0
+  DESCRIPTION "GPU statistics: Welford, medians, radix sort"
+  LANGUAGES CXX HIP)
 
 # ── Опции ──────────────────────────────────────────────────────────
 option(DSP_STATS_BUILD_TESTS  "Build tests"            ON)
