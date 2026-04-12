@@ -17,7 +17,8 @@ add_library(DspStats STATIC)
 add_library(DspStats::DspStats ALIAS DspStats)
 
 target_sources(DspStats PRIVATE
-  # Phase 1 skeleton — sources added in Phase 2
+  src/statistics/src/statistics_processor.cpp
+  src/statistics/src/statistics_sort_gpu.hip
 )
 
 target_include_directories(DspStats
@@ -25,6 +26,7 @@ target_include_directories(DspStats
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   PRIVATE
+    src/statistics/include
     kernels/
     src
 )
