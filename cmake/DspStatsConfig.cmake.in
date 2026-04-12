@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(DspCore REQUIRED)
+find_dependency(hip     REQUIRED)   # lowercase — Linux case-sensitive!
+find_dependency(rocprim REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/DspStatsTargets.cmake")
+check_required_components(DspStats)
