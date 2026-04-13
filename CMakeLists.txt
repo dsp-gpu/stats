@@ -26,6 +26,7 @@ target_sources(DspStats PRIVATE
 target_include_directories(DspStats
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:include>
   PRIVATE
     src/statistics/include
@@ -35,12 +36,36 @@ target_include_directories(DspStats
 target_link_libraries(DspStats PUBLIC DspCore::DspCore roc::rocprim)
 target_compile_features(DspStats PUBLIC cxx_std_17)
 
+# ── Git Version ────────────────────────────────────────────────────
+find_package(Git QUIET)
+if(NOT GIT_EXECUTABLE)
+    set(GIT_EXECUTABLE git)
+endif()
+
+add_custom_target(git_version_DspStats ALL
+    COMMAND ${CMAKE_COMMAND}
+        -D SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -D BIN_DIR=${CMAKE_CURRENT_BINARY_DIR}
+        -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+        -D MODULE_PREFIX=DSPSTATS
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake
+    COMMENT "[DspStats] Checking git version..."
+    VERBATIM
+)
+add_dependencies(DspStats git_version_DspStats)
+
 # ── Install + Export ────────────────────────────────────────────────
 include(GNUInstallDirs)
 install(TARGETS DspStats EXPORT DspStatsTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/version.h"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/DspStats
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/version.json"
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/DspStats
+)
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(cmake/DspStatsConfig.cmake.in
