@@ -13,9 +13,9 @@
 
 #if ENABLE_ROCM
 
-#include "backends/rocm/rocm_backend.hpp"
-#include "backends/rocm/rocm_core.hpp"
-#include "interface/i_backend.hpp"
+#include <core/backends/rocm/rocm_backend.hpp>
+#include <core/backends/rocm/rocm_core.hpp>
+#include <core/interface/i_backend.hpp>
 
 #include <hip/hip_runtime.h>
 

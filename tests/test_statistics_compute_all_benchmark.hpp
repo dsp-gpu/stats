@@ -19,9 +19,9 @@
 #if ENABLE_ROCM
 
 #include "statistics_compute_all_benchmark.hpp"
-#include "backends/rocm/rocm_backend.hpp"
-#include "backends/rocm/rocm_core.hpp"
-#include "services/console_output.hpp"
+#include <core/backends/rocm/rocm_backend.hpp>
+#include <core/backends/rocm/rocm_core.hpp>
+#include <core/services/console_output.hpp>
 
 #include <complex>
 #include <chrono>

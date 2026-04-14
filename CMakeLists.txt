@@ -25,16 +25,22 @@ target_sources(DspStats PRIVATE
 
 target_include_directories(DspStats
   PUBLIC
+    # Стандарт AMD: #include <stats/operations/...>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:include>
   PRIVATE
-    src/statistics/include
     kernels/
     src
 )
 target_link_libraries(DspStats PUBLIC DspCore::DspCore roc::rocprim)
 target_compile_features(DspStats PUBLIC cxx_std_17)
+
+# Прокинуть ENABLE_ROCM=1 — для #if ENABLE_ROCM блоков в коде.
+# PUBLIC чтобы downstream (radar) тоже видел.
+if(ENABLE_ROCM)
+  target_compile_definitions(DspStats PUBLIC ENABLE_ROCM=1)
+endif()
 
 # ── Git Version ────────────────────────────────────────────────────
 find_package(Git QUIET)

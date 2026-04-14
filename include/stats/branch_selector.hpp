@@ -21,7 +21,7 @@
  * @date 2026-04-09
  */
 
-#include "statistics_types.hpp"
+#include <stats/statistics_types.hpp>
 
 #include <cmath>  // std::isfinite
 

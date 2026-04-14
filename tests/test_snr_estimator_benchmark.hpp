@@ -23,12 +23,12 @@
 
 #include "snr_estimator_benchmark.hpp"
 #include "snr_test_helpers.hpp"
-#include "statistics_processor.hpp"
+#include <stats/statistics_processor.hpp>
 
-#include "services/gpu_profiler.hpp"
-#include "services/console_output.hpp"
+#include <core/services/gpu_profiler.hpp>
+#include <core/services/console_output.hpp>
 
-#include "backends/rocm/rocm_core.hpp"
+#include <core/backends/rocm/rocm_core.hpp>
 
 #include <hip/hip_runtime.h>
 

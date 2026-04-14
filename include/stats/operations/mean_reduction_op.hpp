@@ -17,10 +17,10 @@
 
 #if ENABLE_ROCM
 
-#include "services/gpu_kernel_op.hpp"
-#include "services/buffer_set.hpp"
-#include "interface/gpu_context.hpp"
-#include "statistics_types.hpp"
+#include <core/services/gpu_kernel_op.hpp>
+#include <core/services/buffer_set.hpp>
+#include <core/interface/gpu_context.hpp>
+#include <stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>

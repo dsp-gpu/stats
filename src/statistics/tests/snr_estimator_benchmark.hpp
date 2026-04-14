@@ -15,11 +15,11 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_processor.hpp"
+#include <stats/statistics_processor.hpp>
 #include "snr_test_helpers.hpp"
-#include "services/gpu_benchmark_base.hpp"
-#include "services/console_output.hpp"
-#include "services/profiling_types.hpp"
+#include <core/services/gpu_benchmark_base.hpp>
+#include <core/services/console_output.hpp>
+#include <core/services/profiling_types.hpp>
 
 #include <hip/hip_runtime.h>
 

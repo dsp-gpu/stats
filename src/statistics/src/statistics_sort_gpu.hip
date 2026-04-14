@@ -20,7 +20,7 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_sort_gpu.hpp"
+#include <stats/statistics_sort_gpu.hpp>
 
 #include <rocprim/rocprim.hpp>
 #include <hip/hip_runtime.h>

@@ -31,20 +31,20 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_types.hpp"
-#include "interface/gpu_context.hpp"
-#include "services/profiling_types.hpp"
+#include <stats/statistics_types.hpp>
+#include <core/interface/gpu_context.hpp>
+#include <core/services/profiling_types.hpp>
 
 // Op classes (Layer 5)
-#include "operations/mean_reduction_op.hpp"
-#include "operations/welford_fused_op.hpp"
-#include "operations/welford_float_op.hpp"
-#include "operations/median_radix_sort_op.hpp"
-#include "operations/median_histogram_op.hpp"
-#include "operations/median_histogram_complex_op.hpp"
-#include "operations/snr_estimator_op.hpp"  // SNR_05
+#include <stats/operations/mean_reduction_op.hpp>
+#include <stats/operations/welford_fused_op.hpp>
+#include <stats/operations/welford_float_op.hpp>
+#include <stats/operations/median_radix_sort_op.hpp>
+#include <stats/operations/median_histogram_op.hpp>
+#include <stats/operations/median_histogram_complex_op.hpp>
+#include <stats/operations/snr_estimator_op.hpp>  // SNR_05
 
-#include "interface/i_backend.hpp"
+#include <core/interface/i_backend.hpp>
 
 #include <complex>
 #include <vector>

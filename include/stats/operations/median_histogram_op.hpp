@@ -1,18 +1,18 @@
 #pragma once
 
 /**
- * @file median_histogram_complex_op.hpp
- * @brief MedianHistogramComplexOp — exact median via histogram on complex input
+ * @file median_histogram_op.hpp
+ * @brief MedianHistogramOp — exact median via 4-pass byte-wise histogram (float input)
  *
  * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteHistogramMedian() with is_complex=true.
+ * Extracted from StatisticsProcessor::ExecuteHistogramMedian() with is_complex=false.
  *
- * Identical to MedianHistogramOp but uses histogram_median_pass_complex kernel
- * which computes |z| on-the-fly from complex input (no separate magnitudes step).
+ * For large datasets (n_point > 100K) — O(n) instead of O(n log n) sort.
+ * 4 passes: each narrows to the correct byte of the median value.
  *
- * Kernels: histogram_median_pass_complex, find_median_bucket
+ * Kernels: histogram_median_pass, find_median_bucket
  * Private buffers: BufferSet<3> — hist_buf, target_prefix, target_value
- * Shared buffers: reads kInput, writes kMediansCompact
+ * Shared buffers: reads kMagnitudes, writes kMediansCompact
  *
  * @author Kodo (AI Assistant)
  * @date 2026-03-14
@@ -20,10 +20,10 @@
 
 #if ENABLE_ROCM
 
-#include "services/gpu_kernel_op.hpp"
-#include "services/buffer_set.hpp"
-#include "interface/gpu_context.hpp"
-#include "statistics_types.hpp"
+#include <core/services/gpu_kernel_op.hpp>
+#include <core/services/buffer_set.hpp>
+#include <core/interface/gpu_context.hpp>
+#include <stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
@@ -34,17 +34,16 @@
 
 namespace statistics {
 
-class MedianHistogramComplexOp : public drv_gpu_lib::GpuKernelOp {
+class MedianHistogramOp : public drv_gpu_lib::GpuKernelOp {
 public:
-  const char* Name() const override { return "MedianHistogramComplex"; }
+  const char* Name() const override { return "MedianHistogram"; }
 
   /**
-   * @brief Execute histogram-based median on complex input
+   * @brief Execute histogram-based median on float magnitudes
    * @param beam_count Number of beams
    * @param n_point Samples per beam
    *
-   * Reads kInput (complex<float>), writes kMediansCompact (float[beam_count]).
-   * Computes |z| on-the-fly inside the histogram kernel.
+   * Reads kMagnitudes (float), writes kMediansCompact (float[beam_count]).
    */
   void Execute(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count);
@@ -57,7 +56,7 @@ public:
         static_cast<unsigned int>((n_point + kBlockSize - 1) / kBlockSize),
         1024u);
 
-    void* data_ptr = ctx_->GetShared(shared_buf::kInput);
+    void* data_ptr = ctx_->GetShared(shared_buf::kMagnitudes);
     void* hist_buf = bufs_.Get(kHist);
     void* prefix   = bufs_.Get(kPrefix);
     void* value    = bufs_.Get(kValue);
@@ -66,13 +65,16 @@ public:
     hipMemsetAsync(prefix, 0, beam_count * sizeof(unsigned int), stream());
     hipMemsetAsync(value,  0, beam_count * sizeof(unsigned int), stream());
 
-    hipFunction_t hist_kernel = kernel("histogram_median_pass_complex");
+    hipFunction_t hist_kernel = kernel("histogram_median_pass");
     hipFunction_t bucket_kernel = kernel("find_median_bucket");
 
+    // 4 passes: byte 0 (MSB) through byte 3 (LSB)
     for (unsigned int pass = 0; pass < 4; ++pass) {
+      // Clear histogram bins
       hipMemsetAsync(hist_buf, 0,
                      beam_count * 256 * sizeof(unsigned int), stream());
 
+      // Histogram kernel: 2D grid (blocks_per_beam × beam_count)
       void* hist_args[] = { &data_ptr, &hist_buf, &np, &bc, &pass, &value };
       hipError_t err = hipModuleLaunchKernel(
           hist_kernel,
@@ -81,11 +83,12 @@ public:
           0, stream(),
           hist_args, nullptr);
       if (err != hipSuccess) {
-        throw std::runtime_error("MedianHistogramComplexOp histogram pass " +
+        throw std::runtime_error("MedianHistogramOp histogram pass " +
                                   std::to_string(pass) + ": " +
                                   hipGetErrorString(err));
       }
 
+      // Find median bucket: 1 block per beam, 1 thread
       void* bucket_args[] = { &hist_buf, &prefix, &value, &median_rank, &pass };
       err = hipModuleLaunchKernel(
           bucket_kernel,
@@ -93,12 +96,13 @@ public:
           0, stream(),
           bucket_args, nullptr);
       if (err != hipSuccess) {
-        throw std::runtime_error("MedianHistogramComplexOp bucket pass " +
+        throw std::runtime_error("MedianHistogramOp bucket pass " +
                                   std::to_string(pass) + ": " +
                                   hipGetErrorString(err));
       }
     }
 
+    // Convert uint32 → float on host (beam_count is small, typically ≤256)
     ConvertResultToFloat(beam_count);
   }
 
@@ -125,7 +129,7 @@ private:
     hipError_t err = hipMemcpyDtoH(target_host.data(), bufs_.Get(kValue),
                                     beam_count * sizeof(unsigned int));
     if (err != hipSuccess) {
-      throw std::runtime_error("MedianHistogramComplexOp: DtoH target_value failed");
+      throw std::runtime_error("MedianHistogramOp: DtoH target_value failed");
     }
 
     std::vector<float> medians_host(beam_count);
@@ -141,7 +145,7 @@ private:
         medians_host.data(),
         beam_count * sizeof(float));
     if (err != hipSuccess) {
-      throw std::runtime_error("MedianHistogramComplexOp: HtoD medians failed");
+      throw std::runtime_error("MedianHistogramOp: HtoD medians failed");
     }
   }
 };

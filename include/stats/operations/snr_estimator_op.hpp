@@ -24,12 +24,12 @@
 
 #if ENABLE_ROCM
 
-#include "services/gpu_kernel_op.hpp"
-#include "interface/gpu_context.hpp"
-#include "interface/i_backend.hpp"
-#include "statistics_types.hpp"
-#include "operations/median_radix_sort_op.hpp"
-#include "fft_processor_rocm.hpp"
+#include <core/services/gpu_kernel_op.hpp>
+#include <core/interface/gpu_context.hpp>
+#include <core/interface/i_backend.hpp>
+#include <stats/statistics_types.hpp>
+#include <stats/operations/median_radix_sort_op.hpp>
+#include <spectrum/fft_processor_rocm.hpp>
 
 #include <hip/hip_runtime.h>
 

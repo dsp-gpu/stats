@@ -24,10 +24,10 @@
 #if ENABLE_ROCM
 
 #include "snr_test_helpers.hpp"
-#include "statistics_processor.hpp"
-#include "branch_selector.hpp"
+#include <stats/statistics_processor.hpp>
+#include <stats/branch_selector.hpp>
 
-#include "services/console_output.hpp"
+#include <core/services/console_output.hpp>
 
 #include <cassert>
 #include <cmath>

@@ -31,9 +31,9 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_processor.hpp"
-#include "backends/rocm/rocm_backend.hpp"
-#include "backends/rocm/rocm_core.hpp"
+#include <stats/statistics_processor.hpp>
+#include <core/backends/rocm/rocm_backend.hpp>
+#include <core/backends/rocm/rocm_core.hpp>
 
 // test_utils — единая тестовая инфраструктура
 #include "modules/test_utils/test_utils.hpp"

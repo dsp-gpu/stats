@@ -25,8 +25,8 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_processor.hpp"
-#include "DrvGPU/services/gpu_benchmark_base.hpp"
+#include <stats/statistics_processor.hpp>
+#include <core/services/gpu_benchmark_base.hpp>
 
 #include <complex>
 #include <vector>

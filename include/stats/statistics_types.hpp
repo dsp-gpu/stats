@@ -16,7 +16,7 @@
  * @date 2026-02-23 (v1), 2026-04-09 (v2 — SNR_01)
  */
 
-#include "types/window_type.hpp"  // fft_processor::WindowType (SNR_02b)
+#include <spectrum/types/window_type.hpp>  // fft_processor::WindowType (SNR_02b)
 
 #include <vector>
 #include <complex>

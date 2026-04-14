@@ -13,13 +13,13 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_processor.hpp"
-#include "kernels/statistics_kernels_rocm.hpp"
-#include "kernels/gather_decimated_kernel.hpp"  // SNR_03
-#include "kernels/peak_cfar_kernel.hpp"         // SNR_05
+#include <stats/statistics_processor.hpp>
+#include <stats/kernels/statistics_kernels_rocm.hpp>
+#include <stats/kernels/gather_decimated_kernel.hpp>  // SNR_03
+#include <stats/kernels/peak_cfar_kernel.hpp>         // SNR_05
 #include "rocm_profiling_helpers.hpp"
 
-#include "services/console_output.hpp"
+#include <core/services/console_output.hpp>
 
 #include <stdexcept>
 #include <cstring>

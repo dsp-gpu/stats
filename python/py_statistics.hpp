@@ -15,9 +15,9 @@
  * @date 2026-02-24
  */
 
-#include "statistics_processor.hpp"
-#include "statistics_types.hpp"
-#include "branch_selector.hpp"  // SNR_07
+#include <stats/statistics_processor.hpp>
+#include <stats/statistics_types.hpp>
+#include <stats/branch_selector.hpp>  // SNR_07
 
 // ============================================================================
 // PyStatisticsProcessor — GPU statistics on complex signal data (ROCm)

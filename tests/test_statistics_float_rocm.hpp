@@ -22,10 +22,10 @@
 
 #if ENABLE_ROCM
 
-#include "statistics_processor.hpp"
+#include <stats/statistics_processor.hpp>
 #include "complex_to_mag_phase_rocm.hpp"
 #include "test_helpers_rocm.hpp"
-#include "backends/rocm/rocm_backend.hpp"
+#include <core/backends/rocm/rocm_backend.hpp>
 
 // test_utils — единая тестовая инфраструктура
 #include "modules/test_utils/test_utils.hpp"
