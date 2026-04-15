@@ -26,7 +26,10 @@
 #include <complex>
 #include <string>
 
+#include <core/services/scoped_hip_event.hpp>
+
 using fft_func_utils::MakeROCmDataFromEvents;
+using drv_gpu_lib::ScopedHipEvent;
 
 // All kernel names used by statistics module (+ SNR-estimator kernels SNR_03/SNR_05)
 static const std::vector<std::string> kKernelNames = {
@@ -527,40 +530,40 @@ std::vector<FullStatisticsResult> StatisticsProcessor::ComputeAll(
 
   EnsureCompiled();
 
-  hipEvent_t ev_up_s{},   ev_up_e{};
-  hipEvent_t ev_welf_s{}, ev_welf_e{};
-  hipEvent_t ev_med_s{},  ev_med_e{};
+  ScopedHipEvent ev_up_s, ev_up_e;
+  ScopedHipEvent ev_welf_s, ev_welf_e;
+  ScopedHipEvent ev_med_s, ev_med_e;
   if (prof_events) {
-    hipEventCreate(&ev_up_s);   hipEventCreate(&ev_up_e);
-    hipEventCreate(&ev_welf_s); hipEventCreate(&ev_welf_e);
-    hipEventCreate(&ev_med_s);  hipEventCreate(&ev_med_e);
+    ev_up_s.Create();   ev_up_e.Create();
+    ev_welf_s.Create(); ev_welf_e.Create();
+    ev_med_s.Create();  ev_med_e.Create();
   }
 
-  if (prof_events) hipEventRecord(ev_up_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_up_s.get(), ctx_.stream());
   UploadComplexData(data.data(), data.size());
-  if (prof_events) hipEventRecord(ev_up_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_up_e.get(), ctx_.stream());
 
-  if (prof_events) hipEventRecord(ev_welf_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_s.get(), ctx_.stream());
   welford_fused_op_.Execute(params.beam_count, params.n_point);
-  if (prof_events) hipEventRecord(ev_welf_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_e.get(), ctx_.stream());
 
-  if (prof_events) hipEventRecord(ev_med_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_s.get(), ctx_.stream());
   if (params.n_point > kHistogramThreshold) {
     median_hist_complex_op_.Execute(params.beam_count, params.n_point);
   } else {
     median_sort_op_.Execute(params.beam_count, params.n_point);
   }
-  if (prof_events) hipEventRecord(ev_med_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_e.get(), ctx_.stream());
 
   hipStreamSynchronize(ctx_.stream());
 
   if (prof_events) {
     prof_events->push_back({"Upload",
-        MakeROCmDataFromEvents(ev_up_s,   ev_up_e,   1, "H2D")});
+        MakeROCmDataFromEvents(ev_up_s.get(), ev_up_e.get(),   1, "H2D")});
     prof_events->push_back({"Welford_Fused",
-        MakeROCmDataFromEvents(ev_welf_s, ev_welf_e, 0, "welford_fused")});
+        MakeROCmDataFromEvents(ev_welf_s.get(), ev_welf_e.get(), 0, "welford_fused")});
     prof_events->push_back({"Median",
-        MakeROCmDataFromEvents(ev_med_s,  ev_med_e,  0, "median")});
+        MakeROCmDataFromEvents(ev_med_s.get(), ev_med_e.get(),  0, "median")});
   }
 
   auto stats   = ReadStatisticsResults(params.beam_count);
@@ -582,40 +585,40 @@ std::vector<FullStatisticsResult> StatisticsProcessor::ComputeAll(
   EnsureCompiled();
   size_t count = static_cast<size_t>(params.beam_count) * params.n_point;
 
-  hipEvent_t ev_copy_s{}, ev_copy_e{};
-  hipEvent_t ev_welf_s{}, ev_welf_e{};
-  hipEvent_t ev_med_s{},  ev_med_e{};
+  ScopedHipEvent ev_copy_s, ev_copy_e;
+  ScopedHipEvent ev_welf_s, ev_welf_e;
+  ScopedHipEvent ev_med_s, ev_med_e;
   if (prof_events) {
-    hipEventCreate(&ev_copy_s); hipEventCreate(&ev_copy_e);
-    hipEventCreate(&ev_welf_s); hipEventCreate(&ev_welf_e);
-    hipEventCreate(&ev_med_s);  hipEventCreate(&ev_med_e);
+    ev_copy_s.Create(); ev_copy_e.Create();
+    ev_welf_s.Create(); ev_welf_e.Create();
+    ev_med_s.Create();  ev_med_e.Create();
   }
 
-  if (prof_events) hipEventRecord(ev_copy_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_copy_s.get(), ctx_.stream());
   CopyComplexGpuData(gpu_data, count);
-  if (prof_events) hipEventRecord(ev_copy_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_copy_e.get(), ctx_.stream());
 
-  if (prof_events) hipEventRecord(ev_welf_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_s.get(), ctx_.stream());
   welford_fused_op_.Execute(params.beam_count, params.n_point);
-  if (prof_events) hipEventRecord(ev_welf_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_e.get(), ctx_.stream());
 
-  if (prof_events) hipEventRecord(ev_med_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_s.get(), ctx_.stream());
   if (params.n_point > kHistogramThreshold) {
     median_hist_complex_op_.Execute(params.beam_count, params.n_point);
   } else {
     median_sort_op_.Execute(params.beam_count, params.n_point);
   }
-  if (prof_events) hipEventRecord(ev_med_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_e.get(), ctx_.stream());
 
   hipStreamSynchronize(ctx_.stream());
 
   if (prof_events) {
     prof_events->push_back({"D2D_Copy",
-        MakeROCmDataFromEvents(ev_copy_s, ev_copy_e, 1, "D2D")});
+        MakeROCmDataFromEvents(ev_copy_s.get(), ev_copy_e.get(), 1, "D2D")});
     prof_events->push_back({"Welford_Fused",
-        MakeROCmDataFromEvents(ev_welf_s, ev_welf_e, 0, "welford_fused")});
+        MakeROCmDataFromEvents(ev_welf_s.get(), ev_welf_e.get(), 0, "welford_fused")});
     prof_events->push_back({"Median",
-        MakeROCmDataFromEvents(ev_med_s,  ev_med_e,  0, "median")});
+        MakeROCmDataFromEvents(ev_med_s.get(), ev_med_e.get(),  0, "median")});
   }
 
   auto stats   = ReadStatisticsResults(params.beam_count);
@@ -637,42 +640,42 @@ std::vector<FullStatisticsResult> StatisticsProcessor::ComputeAllFloat(
   EnsureCompiled();
   size_t count = static_cast<size_t>(params.beam_count) * params.n_point;
 
-  hipEvent_t ev_copy_s{}, ev_copy_e{};
-  hipEvent_t ev_welf_s{}, ev_welf_e{};
-  hipEvent_t ev_med_s{},  ev_med_e{};
+  ScopedHipEvent ev_copy_s, ev_copy_e;
+  ScopedHipEvent ev_welf_s, ev_welf_e;
+  ScopedHipEvent ev_med_s, ev_med_e;
   if (prof_events) {
-    hipEventCreate(&ev_copy_s); hipEventCreate(&ev_copy_e);
-    hipEventCreate(&ev_welf_s); hipEventCreate(&ev_welf_e);
-    hipEventCreate(&ev_med_s);  hipEventCreate(&ev_med_e);
+    ev_copy_s.Create(); ev_copy_e.Create();
+    ev_welf_s.Create(); ev_welf_e.Create();
+    ev_med_s.Create();  ev_med_e.Create();
   }
 
-  if (prof_events) hipEventRecord(ev_copy_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_copy_s.get(), ctx_.stream());
   CopyFloatGpuData(gpu_float_data, count);
-  if (prof_events) hipEventRecord(ev_copy_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_copy_e.get(), ctx_.stream());
 
   // Welford on float magnitudes → kResult
-  if (prof_events) hipEventRecord(ev_welf_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_s.get(), ctx_.stream());
   welford_float_op_.Execute(params.beam_count, params.n_point);
-  if (prof_events) hipEventRecord(ev_welf_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_welf_e.get(), ctx_.stream());
 
   // Median on float magnitudes → kMediansCompact
-  if (prof_events) hipEventRecord(ev_med_s, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_s.get(), ctx_.stream());
   if (params.n_point > kHistogramThreshold) {
     median_hist_op_.Execute(params.beam_count, params.n_point);
   } else {
     median_sort_op_.ExecuteFloat(params.beam_count, params.n_point);
   }
-  if (prof_events) hipEventRecord(ev_med_e, ctx_.stream());
+  if (prof_events) hipEventRecord(ev_med_e.get(), ctx_.stream());
 
   hipStreamSynchronize(ctx_.stream());
 
   if (prof_events) {
     prof_events->push_back({"D2D_Copy",
-        MakeROCmDataFromEvents(ev_copy_s, ev_copy_e, 1, "D2D")});
+        MakeROCmDataFromEvents(ev_copy_s.get(), ev_copy_e.get(), 1, "D2D")});
     prof_events->push_back({"Welford_Float",
-        MakeROCmDataFromEvents(ev_welf_s, ev_welf_e, 0, "welford_float")});
+        MakeROCmDataFromEvents(ev_welf_s.get(), ev_welf_e.get(), 0, "welford_float")});
     prof_events->push_back({"Median",
-        MakeROCmDataFromEvents(ev_med_s,  ev_med_e,  0, "median")});
+        MakeROCmDataFromEvents(ev_med_s.get(), ev_med_e.get(),  0, "median")});
   }
 
   // WelfordFloat writes mean_re=0, mean_im=0 — enforce explicitly

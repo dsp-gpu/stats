@@ -20,6 +20,7 @@
 #include <core/services/gpu_benchmark_base.hpp>
 #include <core/services/console_output.hpp>
 #include <core/services/profiling_types.hpp>
+#include <core/services/scoped_hip_event.hpp>
 
 #include <hip/hip_runtime.h>
 
@@ -64,18 +65,20 @@ protected:
 
   /// Timed — записываем e2e время через hipEvent пару + RecordROCmEvent
   void ExecuteKernelTimed() override {
-    hipEvent_t ev_start = nullptr, ev_end = nullptr;
-    hipEventCreate(&ev_start);
-    hipEventCreate(&ev_end);
+    // RAII: события освобождаются автоматически при выходе из scope
+    // (в т.ч. при исключении в ComputeSnrDb).
+    drv_gpu_lib::ScopedHipEvent ev_start, ev_end;
+    ev_start.Create();
+    ev_end.Create();
 
-    hipEventRecord(ev_start, 0);  // stream 0 (default)
+    hipEventRecord(ev_start.get(), 0);  // stream 0 (default)
     (void)proc_.ComputeSnrDb(gpu_input_, n_antennas_, n_samples_, cfg_);
-    hipEventRecord(ev_end, 0);
+    hipEventRecord(ev_end.get(), 0);
 
-    hipEventSynchronize(ev_end);
+    hipEventSynchronize(ev_end.get());
 
     float elapsed_ms = 0.0f;
-    hipEventElapsedTime(&elapsed_ms, ev_start, ev_end);
+    hipEventElapsedTime(&elapsed_ms, ev_start.get(), ev_end.get());
 
     // Вручную заполним ROCmProfilingData
     drv_gpu_lib::ROCmProfilingData data;
@@ -84,9 +87,7 @@ protected:
     data.description       = "ComputeSnrDb total (gather → FFT|X|² → CFAR → median)";
 
     RecordROCmEvent("ComputeSnrDb_total", data);
-
-    hipEventDestroy(ev_start);
-    hipEventDestroy(ev_end);
+    // hipEventDestroy не нужен — RAII ~ScopedHipEvent
   }
 
 private:
