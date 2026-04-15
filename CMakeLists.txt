@@ -13,6 +13,7 @@ find_package(rocprim REQUIRED)
 
 include(cmake/fetch_deps.cmake)
 fetch_dsp_core()
+fetch_dsp_spectrum()  # SNR_05: SnrEstimatorOp использует FFTProcessorROCm::ProcessMagnitudesToGPU
 
 # ── Библиотека ─────────────────────────────────────────────────────
 add_library(DspStats STATIC)
@@ -33,7 +34,11 @@ target_include_directories(DspStats
     kernels/
     src
 )
-target_link_libraries(DspStats PUBLIC DspCore::DspCore roc::rocprim)
+target_link_libraries(DspStats PUBLIC
+  DspCore::DspCore
+  DspSpectrum::DspSpectrum   # SNR_05: snr_estimator_op.hpp — публичный header,
+                             # клиенты транзитивно нуждаются в spectrum
+  roc::rocprim)
 target_compile_features(DspStats PUBLIC cxx_std_17)
 
 # Прокинуть ENABLE_ROCM=1 — для #if ENABLE_ROCM блоков в коде.
