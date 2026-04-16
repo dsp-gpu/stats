@@ -80,11 +80,11 @@ protected:
     float elapsed_ms = 0.0f;
     hipEventElapsedTime(&elapsed_ms, ev_start.get(), ev_end.get());
 
-    // Вручную заполним ROCmProfilingData
+    // Заполним ROCmProfilingData: start/end в наносекундах (для ProfilingStats)
     drv_gpu_lib::ROCmProfilingData data;
-    data.execution_time_ms = elapsed_ms;
-    data.transfer_time_ms  = 0.0f;
-    data.description       = "ComputeSnrDb total (gather → FFT|X|² → CFAR → median)";
+    data.start_ns = 0;
+    data.end_ns   = static_cast<uint64_t>(elapsed_ms * 1e6);  // ms → ns
+    data.op_string = "ComputeSnrDb total (gather → FFT|X|² → CFAR → median)";
 
     RecordROCmEvent("ComputeSnrDb_total", data);
     // hipEventDestroy не нужен — RAII ~ScopedHipEvent

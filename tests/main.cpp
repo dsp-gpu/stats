@@ -1,2 +1,10 @@
 #include "all_test.hpp"
-int main() { statistics_all_test::run(); return 0; }
+#include <core/services/console_output.hpp>
+
+int main() {
+  auto& con = drv_gpu_lib::ConsoleOutput::GetInstance();
+  con.Start();
+  statistics_all_test::run();
+  con.WaitEmpty();
+  return 0;
+}

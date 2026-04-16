@@ -9,7 +9,9 @@ pybind11_add_module(dsp_stats dsp_stats_module.cpp)
 target_link_libraries(dsp_stats PRIVATE DspStats::DspStats)
 target_include_directories(dsp_stats PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_SOURCE_DIR}/src/statistics/include)
+  ${CMAKE_SOURCE_DIR}/src/statistics/include
+  # py_gpu_context.hpp — ROCmGPUContext shared header
+  ${FETCHCONTENT_SOURCE_DIR_DSPCORE}/python)
 target_compile_definitions(dsp_stats PRIVATE
   $<$<BOOL:${ENABLE_ROCM}>:ENABLE_ROCM=1>)
 install(TARGETS dsp_stats DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)

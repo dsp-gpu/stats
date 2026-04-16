@@ -19,6 +19,9 @@ fetch_dsp_spectrum()  # SNR_05: SnrEstimatorOp использует FFTProcessor
 add_library(DspStats STATIC)
 add_library(DspStats::DspStats ALIAS DspStats)
 
+# PIC нужен для Python bindings (.so линкует static DspStats)
+set_target_properties(DspStats PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_sources(DspStats PRIVATE
   src/statistics/src/statistics_processor.cpp
   src/statistics/src/statistics_sort_gpu.hip
