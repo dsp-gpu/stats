@@ -21,6 +21,7 @@
 #include <core/services/console_output.hpp>
 #include <core/services/profiling_types.hpp>
 #include <core/services/scoped_hip_event.hpp>
+#include <core/services/profiling/profiling_facade.hpp>
 
 #include <hip/hip_runtime.h>
 
@@ -86,7 +87,8 @@ protected:
     data.end_ns   = static_cast<uint64_t>(elapsed_ms * 1e6);  // ms → ns
     data.op_string = "ComputeSnrDb total (gather → FFT|X|² → CFAR → median)";
 
-    RecordROCmEvent("ComputeSnrDb_total", data);
+    drv_gpu_lib::profiling::ProfilingFacade::GetInstance()
+        .Record(gpu_id_, "stats/snr_estimator", "ComputeSnrDb_total", data);
     // hipEventDestroy не нужен — RAII ~ScopedHipEvent
   }
 

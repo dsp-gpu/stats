@@ -27,6 +27,7 @@
 
 #include <stats/statistics_processor.hpp>
 #include <core/services/gpu_benchmark_base.hpp>
+#include <core/services/profiling/profiling_facade.hpp>
 
 #include <complex>
 #include <vector>
@@ -55,12 +56,12 @@ protected:
     proc_.ComputeAll(data_, params_);
   }
 
-  /// Замер — ComputeAll с StatisticsROCmProfEvents → RecordROCmEvent
+  /// Замер — ComputeAll с StatisticsROCmProfEvents → ProfilingFacade::BatchRecord
   void ExecuteKernelTimed() override {
     statistics::StatisticsROCmProfEvents events;
     proc_.ComputeAll(data_, params_, &events);
-    for (auto& [name, data] : events)
-      RecordROCmEvent(name, data);
+    drv_gpu_lib::profiling::ProfilingFacade::GetInstance()
+        .BatchRecord(gpu_id_, "stats/compute_all", events);
   }
 
 private:
