@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "kernels": [
+    {
+      "name": "C2MP_kernels",
+      "comment": "C2MP hiprtc kernels",
+      "created": "2026-04-20T18:52:39",
+      "params": "",
+      "backend": "rocm"
+    }
+  ]
+}

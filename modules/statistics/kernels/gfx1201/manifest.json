@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "kernels": [
+    {
+      "name": "Statistics_kernels",
+      "comment": "Statistics hiprtc kernels",
+      "created": "2026-04-20T18:52:37",
+      "params": "",
+      "backend": "rocm"
+    }
+  ]
+}

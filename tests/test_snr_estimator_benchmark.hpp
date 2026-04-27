@@ -25,7 +25,6 @@
 #include "snr_test_helpers.hpp"
 #include <stats/statistics_processor.hpp>
 
-#include <core/services/gpu_profiler.hpp>
 #include <core/services/console_output.hpp>
 
 #include <core/backends/rocm/rocm_core.hpp>
