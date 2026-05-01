@@ -2,18 +2,22 @@
 
 /**
  * @file statistics_types.hpp
- * @brief Types and structures for StatisticsProcessor (ROCm)
+ * @brief POD-типы и shared-buffer слоты модуля stats (ROCm).
  *
- * Defines input parameters and result structures for statistical
- * computations on complex float signal data (per-beam).
+ * @note Тип B (technical header): набор struct/enum + namespace констант.
+ *       Содержит:
+ *         - shared_buf:: — слоты GpuContext::RequireShared (kInput, kMagnitudes,
+ *           kResult, kMediansCompact, kGatherOutput, kFftMagSquared, kSnrPerAntenna)
+ *         - StatisticsParams / MeanResult / StatisticsResult / MedianResult /
+ *           FullStatisticsResult — input/output для StatisticsProcessor
+ *         - SNR-estimator (SNR_01, 2026-04-09): BranchType / BranchThresholds /
+ *           SnrEstimationConfig / SnrEstimationResult / snr_defaults::
+ * @note Калибровка SNR-параметров — Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR).
+ *       Source: PyPanelAntennas/SNR/results/exp5_thresholds.json.
  *
- * SNR-estimator types (SNR_01, 2026-04-09):
- *   - BranchType / BranchThresholds
- *   - SnrEstimationConfig / SnrEstimationResult
- *   - snr_defaults:: namespace (calibrated by Python Эксп.5)
- *
- * @author Kodo (AI Assistant)
- * @date 2026-02-23 (v1), 2026-04-09 (v2 — SNR_01)
+ * История:
+ *   - Создан:  2026-02-23
+ *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
 #include <spectrum/types/window_type.hpp>  // fft_processor::WindowType (SNR_02b)

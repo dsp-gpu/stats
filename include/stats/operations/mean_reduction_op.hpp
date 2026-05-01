@@ -1,19 +1,46 @@
 #pragma once
 
-/**
- * @file mean_reduction_op.hpp
- * @brief MeanReductionOp — hierarchical complex mean reduction on GPU
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteMeanReduction().
- *
- * Kernels: mean_reduce_phase1, mean_reduce_final
- * Private buffers: BufferSet<1> — reduce_buf (partial sums)
- * Shared buffers: reads kInput, writes kResult
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// MeanReductionOp — иерархический complex mean per-beam (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op (наследник GpuKernelOp): два-фазная reduce-сумма
+//         complex<float> по beam'у с делением на n. Phase 1 — block-level
+//         partial sums (2D grid: blocks_per_beam × beam_count, double-load),
+//         Phase 2 — финальная reduce одного блока на beam (warp shuffle,
+//         деление на n_point). Результат: beam_count × float2 (re, im).
+//
+// ЗАЧЕМ:  Это первый Op фасадов ComputeMean / ComputeAll. Mean нужен:
+//           - сам по себе (ComputeMean → MeanResult per beam),
+//           - как промежуточная величина для CFAR-noise-floor (через Welford).
+//         Иерархическая reduce — единственный быстрый путь для beam_count×
+//         n_point > 256 (типично 256×4096): naive single-block упрётся в
+//         shared memory; multi-block требует sync через global.
+//
+// ПОЧЕМУ: - Layer 5 Ref03 (одна Op = один логический «считай mean»),
+//           Phase 1/2 — деталь реализации, не публичный API.
+//         - Double-load (kDoubleLoadElements = 2×kBlockSize) — каждый поток
+//           читает 2 элемента → ×2 occupancy memory pipeline + вдвое меньше
+//           блоков → меньше overhead запуска.
+//         - 2D grid (blocks_per_beam × beam_count): blockIdx.y = beam_id
+//           убирает div/mod в kernel (P3-A optimization) — чистый
+//           memory-bound throughput.
+//         - Private BufferSet<1> (reduce_buf) — partial sums per (block, beam).
+//           Размер ленив: только когда меняется beam_count × blocks_per_beam.
+//         - Shared kResult выделяется размером WelfordResult (5 floats per
+//           beam) — чтобы тот же буфер переиспользовать в WelfordFusedOp без
+//           реаллокации (фасад вызывает Mean → потом Welford на kResult).
+//
+// Использование:
+//   statistics::MeanReductionOp mean_op;
+//   mean_op.Initialize(ctx);              // один раз
+//   ctx.RequireShared(shared_buf::kInput, beam_count*n_point*sizeof(float)*2);
+//   // upload в kInput
+//   mean_op.Execute(beam_count, n_point); // out → kResult [bc × float2]
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, выделено из StatisticsProcessor)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -28,17 +55,26 @@
 
 namespace statistics {
 
+/**
+ * @class MeanReductionOp
+ * @brief Layer 5 Ref03 Op: иерархический complex mean per-beam (Phase 1 + Phase 2).
+ *
+ * @note Stateless по семантике (private reduce_buf — кэш аллокации).
+ * @note Требует #if ENABLE_ROCM. Зависит от kernels mean_reduce_phase1/_final.
+ * @see drv_gpu_lib::GpuKernelOp — базовый Layer 3.
+ * @see statistics::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
+ */
 class MeanReductionOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "MeanReduction"; }
 
   /**
-   * @brief Execute complex mean reduction
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить иерархическую complex mean reduce по всем beam'ам.
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Reads ctx_->GetShared(kInput), writes ctx_->GetShared(kResult).
-   * Result: beam_count × float2 (re, im) in kResult buffer.
+   * Читает ctx_->GetShared(kInput), пишет ctx_->GetShared(kResult).
+   * Результат: beam_count × float2 (re, im) в kResult.
    */
   void Execute(size_t beam_count, size_t n_point) {
     unsigned int bc = static_cast<unsigned int>(beam_count);

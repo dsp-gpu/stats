@@ -2,25 +2,24 @@
 
 /**
  * @file gather_decimated_kernel.hpp
- * @brief HIP kernel source: gather_decimated (SNR-estimator, SNR_03)
+ * @brief HIP kernel-source: gather_decimated (вырезка подвыборки для SNR-estimator).
  *
- * Вырезает подвыборку из 2D complex float матрицы [n_antennas × n_samples]
- * с шагами step_antennas и step_samples.
+ * @note Тип B (technical header): R"HIP(...)HIP" source для hiprtc.
+ *       Kernel `gather_decimated` (часть SNR_03 pipeline):
+ *         - вход: complex<float> матрица [n_antennas × n_samples] (row-major)
+ *         - выход: [n_ant_out × n_actual] с шагами step_antennas / step_samples
+ *         - launch: grid(ceil(n_ant_out/64), 1, 1), block(64, 1, 1)
+ *         - thread mapping: 1 thread = 1 output antenna, sequential loop по samples
+ * @note ПОЧЕМУ thread-per-antenna (а не thread-per-element):
+ *       при step_samples > 8 (stride > 64 байт = cache line) соседние потоки
+ *       варпа читают из разных cache line'ов → ×32 amplification memory txns.
+ *       Sequential loop внутри потока → L2 prefetcher идёт вдоль строки.
+ * @note Source конкатенируется со statistics-main source (`GetStatisticsKernelSource()`),
+ *       который уже определяет `struct float2_t` — здесь НЕ переопределяем.
  *
- * Thread mapping (КРИТИЧНО — одно из ключевых решений плана):
- *   - 1 поток = 1 выходная антенна (blockIdx.x * blockDim.x + threadIdx.x)
- *   - sequential loop по samples ВНУТРИ потока
- *
- * Почему НЕ «поток на элемент»:
- *   При step_samples > 8 (stride > 64 байт = cache line) соседние потоки
- *   варпа читают из разных cache line'ов → ×32 amplification memory txns.
- *   Sequential loop внутри потока → L2 prefetcher префетчит вдоль строки.
- *
- * @note Source concatenates with GetStatisticsKernelSource() — он определяет
- *       struct float2_t, поэтому здесь НЕ переопределяем её.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
+ * История:
+ *   - Создан:  2026-04-09 (SNR_03)
+ *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
 #if ENABLE_ROCM

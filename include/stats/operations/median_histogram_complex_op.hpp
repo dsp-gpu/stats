@@ -1,22 +1,40 @@
 #pragma once
 
-/**
- * @file median_histogram_complex_op.hpp
- * @brief MedianHistogramComplexOp — exact median via histogram on complex input
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteHistogramMedian() with is_complex=true.
- *
- * Identical to MedianHistogramOp but uses histogram_median_pass_complex kernel
- * which computes |z| on-the-fly from complex input (no separate magnitudes step).
- *
- * Kernels: histogram_median_pass_complex, find_median_bucket
- * Private buffers: BufferSet<3> — hist_buf, target_prefix, target_value
- * Shared buffers: reads kInput, writes kMediansCompact
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// MedianHistogramComplexOp — точная медиана |z| через 4-pass histogram
+//                            прямо из complex-входа (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op (наследник GpuKernelOp): то же что MedianHistogramOp,
+//         но kernel `histogram_median_pass_complex` считает |z|=√(re²+im²)
+//         on-the-fly внутри гистограммы. Промежуточный buffer магнитуд
+//         (beam_count × n_point × float) НЕ выделяется.
+//
+// ЗАЧЕМ:  Когда вход — complex<float> и магнитуды НЕ нужны после median
+//         (только сама медиана), эта Op экономит memory + одно kernel-launch
+//         (compute_magnitudes пропускается). Используется в фасадном пути
+//         ComputeMedian (без ComputeAll), где нет повторного использования
+//         |z| для Welford. Для n_point > kHistogramThreshold (=100K).
+//
+// ПОЧЕМУ: - Layer 5 Ref03: SRP — отдельный Op для complex input, чтобы не
+//           тащить условный switch is_complex внутри одного класса
+//           (исходно MedianHistogramOp::ExecuteHistogramMedian с флагом).
+//         - Тот же 4-pass byte-histogram алгоритм, что у MedianHistogramOp,
+//           отличается только kernel'ом первого прохода (хелпер с complex).
+//         - find_median_bucket — общий kernel (работает по uint32 bitcast,
+//           не зависит от того, был ли вход real или complex).
+//         - BufferSet<3> идентичен MedianHistogramOp: hist, prefix, value.
+//
+// Использование:
+//   statistics::MedianHistogramComplexOp mhc;
+//   mhc.Initialize(ctx);
+//   // kInput содержит complex<float>[beam_count × n_point]
+//   mhc.Execute(beam_count, n_point);
+//   // kMediansCompact: float[beam_count] точные медианы |z|
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, путь histogram median без |z| buffer)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -34,17 +52,27 @@
 
 namespace statistics {
 
+/**
+ * @class MedianHistogramComplexOp
+ * @brief Layer 5 Ref03 Op: точная медиана |z| через 4-pass histogram прямо из complex.
+ *
+ * @note Не аллоцирует промежуточный |z|-буфер — экономия памяти vs Magnitudes+Histogram.
+ * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
+ * @note Требует #if ENABLE_ROCM. Kernels: histogram_median_pass_complex + find_median_bucket.
+ * @see statistics::MedianHistogramOp — аналог по уже-вычисленным float magnitudes.
+ * @see statistics::MedianRadixSortOp — альтернатива через rocPRIM sort.
+ */
 class MedianHistogramComplexOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "MedianHistogramComplex"; }
 
   /**
-   * @brief Execute histogram-based median on complex input
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить histogram-based median на complex-входе (|z| on-the-fly).
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Reads kInput (complex<float>), writes kMediansCompact (float[beam_count]).
-   * Computes |z| on-the-fly inside the histogram kernel.
+   * Читает kInput (complex<float>), пишет kMediansCompact (float[beam_count]).
+   * |z| вычисляется внутри kernel'а гистограммы (отдельного буфера нет).
    */
   void Execute(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count);

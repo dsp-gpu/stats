@@ -1,22 +1,40 @@
 #pragma once
 
-/**
- * @file welford_fused_op.hpp
- * @brief WelfordFusedOp — single-pass Welford statistics on complex input
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteWelfordFusedKernel().
- *
- * Computes mean(complex) + mean(|z|) + variance(|z|) + std(|z|) in ONE pass.
- * Reads input directly — no separate magnitudes kernel needed.
- *
- * Kernels: welford_fused
- * Private buffers: BufferSet<0> — no private buffers
- * Shared buffers: reads kInput, writes kResult
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// WelfordFusedOp — single-pass Welford по complex-входу (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op (наследник GpuKernelOp): за ОДИН проход по входным
+//         данным считает sum_re, sum_im, mean(|z|), variance(|z|), std(|z|).
+//         Один блок на beam, kBlockSize=256, 5 LDS-массивов с +1 padding.
+//         Результат — 5 floats per beam в kResult: mean_re, mean_im,
+//         mean_mag, variance, std_dev.
+//
+// ЗАЧЕМ:  Заменяет наивный двухпроходный pipeline: «compute_magnitudes →
+//         welford по float magnitudes». Один проход = вдвое меньше memory
+//         transactions + не нужен промежуточный buffer на beam_count×n_point
+//         floats. Главный путь для StatisticsProcessor::ComputeStatistics
+//         и ComputeAll (complex input).
+//
+// ПОЧЕМУ: - Layer 5 Ref03 (один Op = один kernel «полная Welford-статистика»).
+//         - Welford'овская формула online: M2 += (x − mean)·(x − new_mean).
+//           Численно устойчива vs naive sum(x²) − (sum(x))²/n при больших n.
+//         - LDS +1 padding на каждый из 5 массивов — устранение bank
+//           conflicts при tree reduction (P3-B optimization).
+//         - Один блок на beam (`bc` × 1 × 1 grid) — простая модель,
+//           поскольку n_point ≤ 4-16K в типичных сценариях; для n_point >
+//           65K стоит думать о hierarchical reduction (TODO, не блокер).
+//         - BufferSet<0> — нет private buffers, статус Stateless Op.
+//
+// Использование:
+//   statistics::WelfordFusedOp wel;
+//   wel.Initialize(ctx);
+//   wel.Execute(beam_count, n_point);
+//   // kResult теперь содержит beam_count × {mean_re, mean_im, mean_mag, var, std}
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, оптимизация P0-A: один pass)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -31,16 +49,26 @@
 
 namespace statistics {
 
+/**
+ * @class WelfordFusedOp
+ * @brief Layer 5 Ref03 Op: single-pass Welford по complex-входу (online mean+var+std).
+ *
+ * @note Stateless (BufferSet<0>, нет private buffers).
+ * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_fused`.
+ * @note Численно устойчив (online Welford vs naive sum(x²)−(sum(x))²/n).
+ * @see statistics::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
+ * @see statistics::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
+ */
 class WelfordFusedOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "WelfordFused"; }
 
   /**
-   * @brief Execute fused Welford kernel
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить single-pass Welford по complex-входу.
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Reads kInput (complex<float>), writes kResult (5 floats per beam:
+   * Читает kInput (complex<float>), пишет kResult (5 floats per beam:
    * mean_re, mean_im, mean_mag, variance, std_dev).
    */
   void Execute(size_t beam_count, size_t n_point) {

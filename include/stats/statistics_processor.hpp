@@ -1,33 +1,62 @@
 #pragma once
 
-/**
- * @file statistics_processor.hpp
- * @brief StatisticsProcessor — thin Facade for statistical GPU computations (ROCm/HIP)
- *
- * Ref03 Unified Architecture: Layer 6 (Facade).
- *
- * ROCm-only module. Computes per-beam statistics on complex float GPU data:
- * - Mean (complex) — MeanReductionOp
- * - Median (magnitude) — MedianHistogramOp / MedianRadixSortOp (auto-select)
- * - Variance / STD (magnitude) — WelfordFusedOp / WelfordFloatOp
- * - ComputeStatistics — one-pass mean + variance + std (WelfordFusedOp)
- *
- * Input: beam_count * n_point complex<float> (all antennas at once).
- *
- * PUBLIC API IS UNCHANGED — Python bindings (py_statistics.hpp) work as before.
- *
- * Internal structure:
- *   GpuContext ctx_           — per-module: stream, compiled kernels, shared buffers
- *   MeanReductionOp           — hierarchical complex mean
- *   WelfordFusedOp            — single-pass statistics (complex input)
- *   WelfordFloatOp            — statistics on float magnitudes
- *   MedianRadixSortOp         — rocPRIM sort median (small data)
- *   MedianHistogramOp         — histogram median (large data, float input)
- *   MedianHistogramComplexOp  — histogram median (large data, complex input)
- *
- * @author Kodo (AI Assistant)
- * @date 2026-02-23 (v1), 2026-03-14 (v2 Ref03 Facade)
- */
+// ============================================================================
+// StatisticsProcessor — главный ROCm-фасад модуля stats (Layer 6 Ref03)
+//
+// ЧТО:    Тонкий Facade per-beam статистики на complex<float> GPU-данных.
+//         Координирует 7 Layer-5 Op'ов:
+//           - MeanReductionOp           — иерархический complex mean
+//           - WelfordFusedOp            — single-pass (complex → mean+var+std)
+//           - WelfordFloatOp            — Welford по float-магнитудам
+//           - MedianRadixSortOp         — rocPRIM segmented sort (n ≤ 100K)
+//           - MedianHistogramOp         — 4-pass byte histogram (n > 100K, float)
+//           - MedianHistogramComplexOp  — то же на complex (без отдельного |z|)
+//           - SnrEstimatorOp            — SNR-CFAR pipeline (SNR_05/06)
+//         Auto-select median strategy: kHistogramThreshold = 100'000.
+//         Input layout: beam_count × n_point complex<float> (interleaved beams).
+//
+// ЗАЧЕМ:  Это публичный API модуля stats — Python-биндинги (py_statistics.hpp)
+//         и тесты обращаются только сюда. Facade прячет 6-слойную модель
+//         (GpuContext + Op'ы + kernel modules), вызывающему видны только
+//         result-структуры (MeanResult, StatisticsResult, MedianResult,
+//         FullStatisticsResult, SnrEstimationResult). API НЕ меняется при
+//         внутренних рефакторингах — Python работает как был.
+//         ComputeAll объединяет Welford + Median в один upload (уменьшает
+//         H2D в 2× vs последовательных ComputeStatistics + ComputeMedian).
+//
+// ПОЧЕМУ: - Layer 6 Ref03 (Facade) — НЕ делает kernel-launch'и сам, делегирует
+//           всё Op'ам. Op'ы — value-члены (не unique_ptr), trivially-movable.
+//         - GpuContext ctx_ (Layer 1) — единая точка для compile/cache kernels
+//           и shared-buffer pool (kInput, kMagnitudes, kResult, kMediansCompact,
+//           SNR-slots — см. statistics_types.hpp::shared_buf).
+//         - Compile lazy через EnsureCompiled() — kernel source строится
+//           конкатенацией нескольких источников (statistics_kernels_rocm +
+//           gather_decimated_kernel + peak_cfar_kernel) → один hiprtcCompile.
+//         - SnrEstimatorOp создаёт свой FFTProcessorROCm (через SetupFft) —
+//           ленивая инициализация (snr_op_initialized_ flag). FFT — отдельный
+//           модуль со своим GpuContext, не конфликтует с stats ctx_.
+//         - Move noexcept, без copy — facade owns kernel modules + device
+//           buffers (через ctx_), копирование = chaos с lifetime.
+//         - Result НЕ содержит BranchType (классификация Low/Mid/High SNR) —
+//           её делает caller через `BranchSelector` (stateful + hysteresis,
+//           SOLID: facade остаётся stateless).
+//
+// Использование:
+//   statistics::StatisticsProcessor proc(rocm_backend);
+//   statistics::StatisticsParams p{.beam_count=256, .n_point=4096};
+//   auto stats = proc.ComputeStatistics(iq_data, p);
+//   auto full  = proc.ComputeAll(iq_data, p);     // mean + var + std + median
+//   // SNR (CA-CFAR pipeline):
+//   statistics::SnrEstimationConfig cfg;          // defaults уже калиброваны
+//   auto snr_res = proc.ComputeSnrDb(iq_data, n_ant, n_samp, cfg);
+//   // Классификация ветки:
+//   statistics::BranchSelector sel;
+//   auto branch = sel.Select(snr_res.snr_db_global, cfg.thresholds);
+//
+// История:
+//   - Создан:  2026-02-23 (v1, ROCm Facade монолитный)
+//   - Изменён: 2026-04-09 (SNR_06: добавлены ComputeSnrDb + SnrEstimatorOp)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -52,12 +81,22 @@
 
 namespace statistics {
 
-/// ROCm profiling events for ComputeAll methods.
-/// Vector of (event_name, timing_data) pairs — same pattern as HeterodyneROCmProfEvents.
+/// ROCm profiling events для ComputeAll-методов.
+/// Vector пар (event_name, timing_data) — тот же паттерн, что HeterodyneROCmProfEvents.
 using StatisticsROCmProfEvents =
     std::vector<std::pair<const char*, drv_gpu_lib::ROCmProfilingData>>;
 
-/// @ingroup grp_statistics
+/**
+ * @class StatisticsProcessor
+ * @brief Layer 6 Ref03 Facade: per-beam статистика (mean / median / Welford / SNR) на ROCm.
+ *
+ * @note Move-only (copy=delete, move noexcept). Owns GpuContext, Op'ы, FFTProcessorROCm.
+ * @note Требует #if ENABLE_ROCM. Backend* — non-owning (передаётся снаружи).
+ * @note PUBLIC API НЕ меняется — Python bindings (py_statistics.hpp) стабильны.
+ * @see statistics::BranchSelector — stateful классификатор Low/Mid/High по SNR.
+ * @see statistics::shared_buf — слоты GpuContext для этого модуля.
+ * @ingroup grp_statistics
+ */
 class StatisticsProcessor {
 public:
   // =========================================================================
@@ -65,8 +104,8 @@ public:
   // =========================================================================
 
   /**
-   * @brief Constructor
-   * @param backend Pointer to IBackend (non-owning, must be ROCm backend)
+   * @brief Конструктор.
+   * @param backend Указатель на IBackend (non-owning, обязан быть ROCm-backend).
    */
   explicit StatisticsProcessor(drv_gpu_lib::IBackend* backend);
 
@@ -116,27 +155,27 @@ public:
   // Public API -- ComputeAll (Statistics + Median in one call)
   // =========================================================================
 
-  /// CPU complex data: upload once → Welford + Median → FullStatisticsResult per beam.
-  /// Eliminates double upload vs calling ComputeStatistics + ComputeMedian separately.
+  /// CPU complex: один upload → Welford + Median → FullStatisticsResult per beam.
+  /// Убирает двойной H2D vs последовательных ComputeStatistics + ComputeMedian.
   std::vector<FullStatisticsResult> ComputeAll(
       const std::vector<std::complex<float>>& data,
       const StatisticsParams& params,
       StatisticsROCmProfEvents* prof_events = nullptr);
 
-  /// GPU complex data (production path): D2D once → Welford + Median.
+  /// GPU complex (production-путь): D2D один раз → Welford + Median.
   std::vector<FullStatisticsResult> ComputeAll(
       void* gpu_data,
       const StatisticsParams& params,
       StatisticsROCmProfEvents* prof_events = nullptr);
 
   /// GPU float magnitudes: kMagnitudes → WelfordFloat + Median.
-  /// Note: mean field is always {0, 0} (float path has no complex mean).
+  /// Note: mean field всегда {0, 0} (float-путь не имеет complex mean).
   std::vector<FullStatisticsResult> ComputeAllFloat(
       void* gpu_float_data,
       const StatisticsParams& params,
       StatisticsROCmProfEvents* prof_events = nullptr);
 
-  /// CPU float magnitudes: convenience wrapper, uploads then calls GPU overload.
+  /// CPU float magnitudes: convenience-обёртка, делает upload и вызывает GPU-overload.
   std::vector<FullStatisticsResult> ComputeAllFloat(
       const std::vector<float>& data,
       const StatisticsParams& params);
@@ -170,15 +209,15 @@ public:
   // =========================================================================
 
   /**
-   * @brief Compute SNR (dB) from CPU data via CA-CFAR
+   * @brief Вычислить SNR (dB) из CPU-данных через CA-CFAR.
    *
    * Pipeline: upload → gather → FFT(Hann)|X|² → CFAR → median.
    *
-   * @param data        CPU complex<float> [n_antennas × n_samples] (row-major)
-   * @param n_antennas  Number of antennas
-   * @param n_samples   Samples per antenna
-   * @param config      SNR estimation config (см. snr_defaults::)
-   * @return Result with snr_db_global, used_antennas, used_bins, n_actual
+   * @param data        CPU complex<float> [n_antennas × n_samples] (row-major).
+   * @param n_antennas  Число антенн.
+   * @param n_samples   Сэмплов на антенну.
+   * @param config      Конфиг SNR-estimator (см. snr_defaults::).
+   * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
    *
    * @note Result НЕ содержит BranchType — классификация через BranchSelector.
    */
@@ -189,14 +228,14 @@ public:
       const SnrEstimationConfig& config);
 
   /**
-   * @brief Compute SNR (dB) from GPU data (production path)
+   * @brief Вычислить SNR (dB) из GPU-данных (production-путь).
    *
    * Pipeline: gather → FFT(Hann)|X|² → CFAR → median (данные уже на GPU).
    *
-   * @param gpu_data    GPU complex<float>* [n_antennas × n_samples]
-   * @param n_antennas  Number of antennas
-   * @param n_samples   Samples per antenna
-   * @param config      SNR estimation config
+   * @param gpu_data    GPU complex<float>* [n_antennas × n_samples].
+   * @param n_antennas  Число антенн.
+   * @param n_samples   Сэмплов на антенну.
+   * @param config      Конфиг SNR-estimator.
    */
   SnrEstimationResult ComputeSnrDb(
       void* gpu_data,

@@ -1,26 +1,60 @@
 #pragma once
 
-/**
- * @file snr_estimator_op.hpp
- * @brief SnrEstimatorOp — Layer 5 Ref03 Op для SNR-estimator (SNR_05)
- *
- * Pipeline:
- *   1. gather_decimated           — вырезка подвыборки [n_ant_out × n_actual]
- *   2. ProcessMagnitudesToGPU     — pad(Hann) → FFT → |X|²
- *   3. peak_cfar                  — argmax + CA-CFAR per antenna
- *   4. MedianRadixSortOp::ExecuteFloat(1, n_ant_out) — медиана по антеннам
- *
- * Калибровано Python моделью (PyPanelAntennas/SNR/, P_correct=97.9%).
- *
- * Зависит от kernels:
- *   - gather_decimated       (из gather_decimated_kernel.hpp)
- *   - peak_cfar              (из peak_cfar_kernel.hpp)
- *   Оба компилируются facade'ом (StatisticsProcessor::EnsureCompiled)
- *   через конкатенацию source strings.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
- */
+// ============================================================================
+// SnrEstimatorOp — полный SNR/CA-CFAR pipeline с авто-децимацией
+//                  (Layer 5 Ref03, SNR_05/06)
+//
+// ЧТО:    Composite Op: координирует 4-стадийный pipeline для оценки SNR в dB:
+//           1. gather_decimated     — вырезка [n_ant_out × n_actual]
+//                                     (step_antennas/step_samples decimation)
+//           2. FFT(Hann) → |X|²    — через FFTProcessorROCm (со своим ctx)
+//           3. peak_cfar            — argmax + CA-CFAR per antenna
+//                                     (guard / ref bins, hysteresis)
+//           4. median по антеннам   — MedianRadixSortOp::ExecuteFloat(1, n_ant_out)
+//         Auto-параметры: step_samples и step_antennas по умолчанию рассчитываются
+//         из target_n_fft (2048) и kTargetAntennasMedian (50).
+//
+// ЗАЧЕМ:  StatisticsProcessor::ComputeSnrDb — публичный API радара для оценки
+//         «уровень сигнала vs фоновый шум» в реальном времени. Нужен для
+//         BranchSelector (Low/Mid/High SNR → разные стратегии обработки),
+//         автоматической калибровки усиления, индикации потери сигнала.
+//         Калибровано Python Эксп.5 (P_correct=97.9% на синтетике).
+//
+// ПОЧЕМУ: - Composite Layer 5 Op (а не Layer 6 Facade): SnrEstimatorOp всё ещё
+//           «один логический шаг» в глазах StatisticsProcessor — фасад просто
+//           делегирует, без своих kernel-launch'ей. SOLID.
+//         - Свой FFTProcessorROCm (через SetupFft) — потому что spectrum это
+//           отдельный модуль со своим GpuContext (FFT kernel cache, hipFFT
+//           plans). Не конфликтует с stats ctx_, share только backend.
+//           Lazy init через unique_ptr → освобождение в OnRelease.
+//         - Hann window default: Python Эксп.0 показал что без window есть
+//           −27 dB bias от sinc sidelobes. Калибровано config.window =
+//           snr_defaults::kDefaultWindow = Hann.
+//         - squared=true в ProcessMagnitudesToGPU: power spectrum |X|², без
+//           sqrt — для CFAR ratio sqrt не нужен (отношение mean(|X|²) одинаково
+//           корректно), даёт ~7× speedup на RDNA (sqrt ≈ 25 cycles).
+//         - Median по антеннам через MedianRadixSortOp (не отдельный kernel)
+//           — переиспользуем готовый Op, n_ant_out обычно ≤ 50, sort оптимален.
+//           Передача данных через kMagnitudes shared slot (D2D copy из
+//           kSnrPerAntenna) — Op ожидает данные именно там.
+//         - Result БЕЗ BranchType — классификация делегирована BranchSelector
+//           (stateful, hysteresis); facade и Op остаются stateless.
+//         - 5 проверок параметров (n_actual, n_ant_out, ref window) — early
+//           validate, чтобы не упасть в kernel-launch с непонятным сообщением.
+//
+// Использование:
+//   statistics::SnrEstimatorOp snr_op;
+//   snr_op.SetupFft(rocm_backend);     // один раз, до Initialize
+//   snr_op.Initialize(stats_ctx);
+//   statistics::SnrEstimationConfig cfg;        // defaults уже калиброваны
+//   statistics::SnrEstimationResult res;
+//   snr_op.Execute(gpu_iq, n_ant, n_samp, cfg, res);
+//   // res.snr_db_global — медиана SNR по подвыборке антенн
+//
+// История:
+//   - Создан:  2026-04-09 (SNR_05/06: composite Op для SNR-CFAR pipeline)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -41,37 +75,44 @@
 namespace statistics {
 
 /**
- * @brief SnrEstimatorOp — Layer 5 Op for full SNR CFAR pipeline.
+ * @class SnrEstimatorOp
+ * @brief Layer 5 Ref03 composite Op: полный SNR-CFAR pipeline (gather → FFT → CFAR → median).
  *
- * Lifecycle:
- *   1. op.SetupFft(backend)       — создать FFTProcessorROCm (один раз)
- *   2. op.Initialize(ctx)         — attach GpuContext (standard GpuKernelOp API)
- *   3. op.Execute(gpu_input, ..., config, result)  — выполнить pipeline
- *   4. op.Release()               — освободить ресурсы
+ * @note Owns FFTProcessorROCm (через unique_ptr, SetupFft до Initialize).
+ * @note Требует #if ENABLE_ROCM. Зависит от kernels gather_decimated + peak_cfar.
+ * @note Калибровано Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR mean).
+ * @note Lifecycle: SetupFft(backend) → Initialize(ctx) → Execute(...) → Release.
+ * @see statistics::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
+ * @see fft_processor::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
+ * @see statistics::MedianRadixSortOp — переиспользуется для медианы по антеннам.
  */
 class SnrEstimatorOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "SnrEstimator"; }
 
   /**
-   * @brief Setup FFT processor — вызывается однажды до Initialize.
-   * @param fft_backend IBackend для FFTProcessorROCm (shared с facade)
+   * @brief Создать FFTProcessorROCm — вызывать один раз ДО Initialize.
+   * @param fft_backend IBackend для FFTProcessorROCm (shared с facade).
    *
-   * Создаёт свой FFTProcessorROCm. Это отдельный модуль со своим GpuContext
-   * (своя компиляция FFT kernels) — НЕ конфликтует с нашим statistics ctx_.
+   * Внутренний FFTProcessorROCm имеет свой GpuContext (FFT kernel cache,
+   * hipFFT plans) — НЕ конфликтует с нашим statistics ctx_, разделяется
+   * только backend (низкоуровневый stream owner).
    */
   void SetupFft(drv_gpu_lib::IBackend* fft_backend) {
     fft_processor_ = std::make_unique<fft_processor::FFTProcessorROCm>(fft_backend);
   }
 
   /**
-   * @brief Execute full SNR pipeline: gather → FFT|X|² → CFAR → median.
+   * @brief Выполнить полный SNR pipeline: gather → FFT|X|² → CFAR → median.
    *
-   * @param gpu_input       Complex<float>* [n_antennas × n_samples] (на GPU)
-   * @param n_antennas      Число входных антенн
-   * @param n_samples       Сэмплов на антенну
-   * @param config          Validated SnrEstimationConfig
-   * @param out_result      Result struct (populated by this method)
+   * @param gpu_input    Complex<float>* [n_antennas × n_samples] на GPU.
+   * @param n_antennas   Число входных антенн.
+   * @param n_samples    Сэмплов на антенну.
+   * @param config       Validated SnrEstimationConfig (поля 0 → auto-defaults).
+   * @param out_result   Result struct (заполняется этим методом, БЕЗ BranchType).
+   * @throws std::invalid_argument если gpu_input null, или вырожденные размеры,
+   *         или ref window ≥ n_actual после auto-decimation.
+   * @throws std::runtime_error если SetupFft не был вызван, или kernel-launch упал.
    */
   void Execute(void* gpu_input,
                uint32_t n_antennas, uint32_t n_samples,

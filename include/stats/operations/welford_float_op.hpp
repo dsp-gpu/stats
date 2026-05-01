@@ -1,22 +1,40 @@
 #pragma once
 
-/**
- * @file welford_float_op.hpp
- * @brief WelfordFloatOp — Welford statistics on float magnitudes (already computed)
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteWelfordFloatKernel().
- *
- * For cases where magnitudes are pre-computed (float input, not complex).
- * Computes mean(|z|) + variance(|z|) + std(|z|).
- *
- * Kernels: welford_float
- * Private buffers: BufferSet<0>
- * Shared buffers: reads kMagnitudes, writes kResult
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// WelfordFloatOp — Welford-статистика по уже-вычисленным float magnitudes
+//                  (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op (наследник GpuKernelOp): считает mean(|z|), variance(|z|),
+//         std(|z|) по float-входу (магнитуды уже вычислены другим этапом).
+//         3 LDS-массива × (kBlockSize+1) floats: mean_mag, M2, count.
+//         Результат — те же 5 floats per beam, что у WelfordFusedOp,
+//         но mean_re=mean_im=0 (комплексной части нет).
+//
+// ЗАЧЕМ:  Используется когда вход — уже подготовленные магнитуды (например,
+//         после ComputeMagnitudesOp в spectrum, или напрямую из Python через
+//         vector<float>). Путь ComputeStatisticsFloat / ComputeAllFloat
+//         в StatisticsProcessor. Также — стадия post-CFAR обработки в SNR
+//         pipeline (где |X|² уже посчитано).
+//
+// ПОЧЕМУ: - Layer 5 Ref03: отдельный Op а не флаг в WelfordFusedOp — SRP
+//           (разный input layout, разный kernel, разная shared memory).
+//         - LDS +1 padding (P3-B) — устранение bank conflicts при tree
+//           reduction. 3 массива (vs 5 у fused) — нет complex sum_re/sum_im.
+//         - Один блок на beam (`bc` × 1 × 1 grid) — та же модель что у
+//           WelfordFusedOp; верхняя оценка n_point ≤ 64K.
+//         - BufferSet<0> — Op stateless, all temp memory в LDS.
+//
+// Использование:
+//   statistics::WelfordFloatOp wf;
+//   wf.Initialize(ctx);
+//   // kMagnitudes уже заполнен (магнитуды compute или Python upload)
+//   wf.Execute(beam_count, n_point);
+//   // kResult: beam_count × {0, 0, mean_mag, var, std}
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, путь ComputeStatisticsFloat)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -31,16 +49,25 @@
 
 namespace statistics {
 
+/**
+ * @class WelfordFloatOp
+ * @brief Layer 5 Ref03 Op: Welford по уже-вычисленным float magnitudes.
+ *
+ * @note Stateless (BufferSet<0>, all temp в LDS).
+ * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_float`.
+ * @note mean_re/mean_im в выходе ВСЕГДА 0 (вход не комплексный).
+ * @see statistics::WelfordFusedOp — аналог по complex-входу (single-pass).
+ */
 class WelfordFloatOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "WelfordFloat"; }
 
   /**
-   * @brief Execute Welford on float magnitudes
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить Welford по float-магнитудам.
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Reads kMagnitudes (float), writes kResult (5 floats per beam:
+   * Читает kMagnitudes (float), пишет kResult (5 floats per beam:
    * mean_re=0, mean_im=0, mean_mag, variance, std_dev).
    */
   void Execute(size_t beam_count, size_t n_point) {

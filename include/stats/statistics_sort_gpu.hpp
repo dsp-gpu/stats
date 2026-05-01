@@ -1,14 +1,41 @@
 #pragma once
-/**
- * @file statistics_sort_gpu.hpp
- * @brief Declaration of GPU segmented sort (implemented in statistics_sort_gpu.hip)
- *
- * This header is included from both:
- *   - statistics_sort_gpu.hip  (HIP compiler — definition)
- *   - statistics_processor.cpp (g++ — usage)
- *
- * Functions use C++ linkage inside the statistics::gpu_sort namespace.
- */
+
+// ============================================================================
+// statistics::gpu_sort — обёртка над rocPRIM segmented radix sort
+//
+// ЧТO:    Две функции namespace-уровня:
+//           - QuerySortTempSize  — узнать сколько байт temp storage требует sort
+//           - ExecuteSort        — выполнить параллельный per-segment sort
+//         Сегмент = beam (один beam_count = num_segments). Все 256 beam'ов
+//         сортируются за ОДИН GPU-вызов (rocprim::segmented_radix_sort_keys).
+//         Реализация — в statistics_sort_gpu.hip (внутри hipcc unit).
+//
+// ЗАЧЕМ:  Радикс-сортировка нужна `MedianRadixSortOp` для медианы по магнитудам
+//         (брать средний элемент после sort'а сегмента). rocPRIM требует hipcc-
+//         компиляцию (из-за rocprim/rocprim.hpp), поэтому объявления вынесены
+//         в обычный header — `.cpp` (g++) видит только сигнатуры, реализация
+//         компилируется hipcc отдельно. Это разрывает rocPRIM-зависимость для
+//         основной части `statistics`.
+//
+// ПОЧЕМУ: - Two-step API (Query → Allocate → Execute) — стандарт rocPRIM:
+//           размер temp storage зависит от числа сегментов и алгоритма,
+//           узнать его можно только runtime-вызовом с null storage.
+//         - Сортировка float (а не uint32 + bit-reinterpret) — rocPRIM
+//           корректно обрабатывает float ordering (sign-bit flip встроен).
+//         - segmented (а не batched) — beam'ы могут иметь разные смещения
+//           (хотя сейчас все равны n_point); offsets-массив универсальнее.
+//
+// Использование:
+//   size_t tmp_bytes = 0;
+//   gpu_sort::QuerySortTempSize(tmp_bytes, d_begin, d_end, total, beams, str);
+//   void* tmp = ...; // выделить tmp_bytes на device
+//   gpu_sort::ExecuteSort(tmp, tmp_bytes, mag_in, mag_out,
+//                          d_begin, d_end, total, beams, str);
+//
+// История:
+//   - Создан:  2026-02-23
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -19,14 +46,14 @@ namespace statistics {
 namespace gpu_sort {
 
 /**
- * @brief Query temp storage size for segmented radix sort.
+ * @brief Узнать размер temp storage для segmented radix sort (Query-фаза rocPRIM).
  *
- * @param[out] temp_size    Required temp storage bytes
- * @param d_begin_offsets   Device ptr: begin offsets per segment [beam_count]
- * @param d_end_offsets     Device ptr: end offsets per segment   [beam_count]
- * @param total_elements    beam_count * n_point
- * @param num_segments      beam_count
- * @param stream            HIP stream
+ * @param[out] temp_size    Требуемый размер temp storage (байт).
+ * @param d_begin_offsets   Device ptr: начальные смещения per-segment [beam_count].
+ * @param d_end_offsets     Device ptr: конечные смещения per-segment   [beam_count].
+ * @param total_elements    beam_count × n_point.
+ * @param num_segments      beam_count.
+ * @param stream            HIP stream.
  */
 hipError_t QuerySortTempSize(
     size_t&               temp_size,
@@ -37,20 +64,20 @@ hipError_t QuerySortTempSize(
     hipStream_t           stream);
 
 /**
- * @brief Execute segmented radix sort (ascending) on float magnitudes.
+ * @brief Выполнить segmented radix sort (по возрастанию) на float-магнитудах.
  *
- * Each segment (beam) is sorted independently in parallel.
- * All 256 beams are sorted in ONE GPU call.
+ * Каждый сегмент (beam) сортируется независимо и параллельно.
+ * Все beam'ы (типично 256) — за ОДИН GPU-вызов rocPRIM.
  *
- * @param temp_storage      Pre-allocated temp buffer (from QuerySortTempSize)
- * @param temp_size         Size of temp_storage
- * @param keys_in           Device ptr: float magnitudes [total_elements]
- * @param keys_out          Device ptr: sorted output   [total_elements]
- * @param d_begin_offsets   Device ptr: begin offsets [num_segments]
- * @param d_end_offsets     Device ptr: end offsets   [num_segments]
- * @param total_elements    beam_count * n_point
- * @param num_segments      beam_count
- * @param stream            HIP stream
+ * @param temp_storage      Pre-allocated temp buffer (получен через QuerySortTempSize).
+ * @param temp_size         Размер temp_storage (байт).
+ * @param keys_in           Device ptr: исходные float-магнитуды [total_elements].
+ * @param keys_out          Device ptr: отсортированный вывод    [total_elements].
+ * @param d_begin_offsets   Device ptr: начальные смещения [num_segments].
+ * @param d_end_offsets     Device ptr: конечные смещения   [num_segments].
+ * @param total_elements    beam_count × n_point.
+ * @param num_segments      beam_count.
+ * @param stream            HIP stream.
  */
 hipError_t ExecuteSort(
     void*                 temp_storage,

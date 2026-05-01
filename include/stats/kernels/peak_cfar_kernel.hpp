@@ -2,30 +2,26 @@
 
 /**
  * @file peak_cfar_kernel.hpp
- * @brief HIP kernel source: peak_cfar (SNR-estimator, SNR_05)
+ * @brief HIP kernel-source: peak_cfar (CA-CFAR detector для SNR-estimator).
  *
- * CA-CFAR detector на уже вычисленных |X|² (power spectrum от
- * `complex_to_magnitude_squared`).
+ * @note Тип B (technical header): R"HIP(...)HIP" source для hiprtc.
+ *       Kernel `peak_cfar` (часть SNR_05 pipeline) работает на |X|²
+ *       (power spectrum от `complex_to_magnitude_squared`):
+ *         - launch: grid(n_ant_out, 1, 1), block(256, 1, 1) — 1 block = 1 антенна
+ *         - Pass 1: parallel argmax через LDS reduction
+ *         - Pass 2: parallel ref-window sum через atomicAdd
+ *         - Pass 3: thread 0 пишет snr_db_out[ant] = 10·log10(peak² / noise_mean)
+ *       Ref window: [k_peak − (guard+ref) .. k_peak − (guard+1)] ∪
+ *                   [k_peak + (guard+1)   .. k_peak + (guard+ref)]
+ *       с wraparound `(k + offset + nFFT) % nFFT` — безопасно при малых k_peak.
+ * @note `search_full_spectrum` — НЕ параметр ядра: caller передаёт nFFT
+ *       (поиск по всему спектру) или nFFT/2 (только положительные частоты).
+ * @note Source конкатенируется со statistics-main source, который определяет
+ *       BLOCK_SIZE=256. Здесь используется явное `__launch_bounds__(256)`.
  *
- * Thread mapping:
- *   - 1 BLOCK = 1 антенна (blockIdx.x = ant_id, blockDim.x = BLOCK_SIZE = 256)
- *   - Pass 1: parallel argmax через LDS reduction
- *   - Pass 2: parallel ref-window sum через atomicAdd
- *   - Pass 3: thread 0 пишет snr_db_out[ant] = 10·log10(peak² / noise_mean)
- *
- * ref window: [k_peak − (guard+ref)..k_peak − (guard+1)] ∪
- *             [k_peak + (guard+1)..k_peak + (guard+ref)]
- * c wraparound через `(k + offset + nFFT) % nFFT` — безопасно при малых k_peak.
- *
- * search_full_spectrum:
- *   НЕ параметр ядра — caller передаёт nFFT (поиск по всему) или nFFT/2
- *   (только положительные частоты).
- *
- * @note Source concatenates with statistics main source которая определяет
- *       BLOCK_SIZE=256. Используем явное __launch_bounds__(256).
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
+ * История:
+ *   - Создан:  2026-04-09 (SNR_05)
+ *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
 #if ENABLE_ROCM

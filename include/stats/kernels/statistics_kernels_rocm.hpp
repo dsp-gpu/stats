@@ -2,34 +2,27 @@
 
 /**
  * @file statistics_kernels_rocm.hpp
- * @brief HIP kernel sources for StatisticsProcessor (optimized v2)
+ * @brief HIP kernel-source строки для StatisticsProcessor (оптимизированная v4).
  *
- * Contains:
- * - compute_magnitudes:    complex -> |z| per element  (used by ComputeMedian)
- * - mean_reduce_phase1:    block-level sum reduction   (double-load + warp shuffle)
- * - mean_reduce_final:     divide partial sums by n    (warp shuffle)
- * - welford_stats:         single-pass Welford         (kept for compat, optimized)
- * - welford_fused:  TASK-1 one-pass stats, no magnitudes buffer
- * - extract_medians: TASK-2 GPU compact extraction (1 DtoH instead of 256)
+ * @note Тип B (technical header): R"HIP(...)HIP" source для hiprtc.
+ *       Содержит:
+ *         - compute_magnitudes      — complex → |z| (used by ComputeMedian)
+ *         - mean_reduce_phase1/final — иерархическая complex sum reduction
+ *         - welford_stats           — single-pass Welford (legacy compat)
+ *         - welford_fused (P0-A)    — one-pass mean+var+std без magnitudes buffer
+ *         - welford_float           — Welford по float-магнитудам
+ *         - histogram_median_pass + histogram_median_pass_complex — 4-pass median
+ *         - find_median_bucket      — host-cumsum в LDS (1 thread per beam)
+ *         - extract_medians (P0-B)  — GPU compact (1 DtoH вместо 256)
+ * @note Применённые оптимизации (см. P0..P3 в коде ниже): welford_fused,
+ *       GPU-extract, warp shuffle final reduction, double-load, __launch_bounds__,
+ *       2D grid (без div/mod), LDS +1 padding (bank conflicts), __fsqrt_rn,
+ *       #pragma unroll 4 grid-stride loops.
+ * @note WARP_SIZE: передаётся через -DWARP_SIZE=N (32 для RDNA, 64 для CDNA).
  *
- * Optimizations applied (v4):
- *   P0-A: welford_fused   — один pass по данным (нет промежуточного magnitudes buffer)
- *   P0-B: extract_medians — GPU kernel вместо 256 hipMemcpyDtoH
- *   P1-A: Warp shuffle    — финальная стадия reduction без __syncthreads
- *   P1-B: Double-load     — каждый поток читает 2 элемента (вдвое меньше блоков)
- *   P1-C: __launch_bounds__(256) — правильный резерв регистров
- *   P1-D: blocks_per_beam — передаётся как параметр (убран div в ядре)
- *   P2-A: __fsqrt_rn      — fast intrinsic вместо sqrtf
- *   P2-B: LDS +1 padding  — устранение bank conflicts при tree reduction
- *   P3-A: 2D grid          — mean_reduce_phase1 без div/mod (blockIdx.y = beam)
- *   P3-B: LDS +1 padding   — welford ядра: extern __shared__ с +1 padding
- *   P3-C: #pragma unroll 4  — grid-stride loops в welford ядрах
- *   P3-D: double-load       — compute_magnitudes: 2 элемента на поток
- *
- * WARP_SIZE: передаётся через -DWARP_SIZE=N при компиляции (32 RDNA, 64 CDNA)
- *
- * @author Kodo (AI Assistant)
- * @date 2026-02-26
+ * История:
+ *   - Создан:  2026-02-26
+ *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
 #if ENABLE_ROCM

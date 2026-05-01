@@ -1,22 +1,49 @@
 #pragma once
 
-/**
- * @file median_histogram_op.hpp
- * @brief MedianHistogramOp — exact median via 4-pass byte-wise histogram (float input)
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from StatisticsProcessor::ExecuteHistogramMedian() with is_complex=false.
- *
- * For large datasets (n_point > 100K) — O(n) instead of O(n log n) sort.
- * 4 passes: each narrows to the correct byte of the median value.
- *
- * Kernels: histogram_median_pass, find_median_bucket
- * Private buffers: BufferSet<3> — hist_buf, target_prefix, target_value
- * Shared buffers: reads kMagnitudes, writes kMediansCompact
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// MedianHistogramOp — точная медиана 4-проходным byte-histogram (float input)
+//                     (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op (наследник GpuKernelOp): считает median(|z|) per beam
+//         через 4 прохода byte-wise гистограммы по IEEE-754 float-битам.
+//         На каждом проходе: histogram (256 bins) → find_median_bucket
+//         сужает диапазон по одному байту (MSB → LSB). После 4 проходов
+//         target_value содержит точный uint32-bitcast медианы; ConvertResultToFloat
+//         делает unxor sign-bit и memcpy → float.
+//
+// ЗАЧЕМ:  Для крупных beam'ов (n_point > 100K) sort O(n log n) проигрывает
+//         histogram O(4n). MedianRadixSortOp на 1M элементов выделяет ~8MB
+//         temp + sort всех элементов; histogram выделяет beam×256×4 байт
+//         (256 KB на beam_count=256) и читает данные 4 раза без перестановок.
+//         В StatisticsProcessor auto-select: n_point > kHistogramThreshold
+//         (=100'000) → MedianHistogramOp, иначе MedianRadixSortOp.
+//
+// ПОЧЕМУ: - Layer 5 Ref03 (один Op = одна стратегия median, SRP).
+//         - 4-pass byte histogram — известный алгоритм для exact median по
+//           IEEE-754 float (sign-magnitude → ordered by byte). Работает
+//           точно (без приближений), без перестановки данных.
+//         - 1024 blocks_per_beam cap — баланс между параллелизмом и
+//           overhead atomics на 256-bin global histogram.
+//         - find_median_bucket: 1 thread per beam (1 block per beam) —
+//           последовательно ищет bucket где cumulative count проходит
+//           median_rank. Не bottleneck — beam_count типично ≤ 256.
+//         - Sign-bit XOR (`u ^ 0x80000000`) — IEEE-754 хитрость:
+//           перед битовым sort'ом флипаем sign, после — обратно. Делается
+//           на host (beam_count небольшой) — проще чем kernel для post-process.
+//         - BufferSet<3>: hist_buf (beam×256×u32), target_prefix, target_value
+//           (по beam_count×u32). Lazy alloc через AllocatePrivateBuffers.
+//
+// Использование:
+//   statistics::MedianHistogramOp mh;
+//   mh.Initialize(ctx);
+//   // kMagnitudes уже заполнен (compute_magnitudes или float Python upload)
+//   mh.Execute(beam_count, n_point);
+//   // kMediansCompact: float[beam_count] точные медианы
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, путь histogram median для больших n)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -34,16 +61,26 @@
 
 namespace statistics {
 
+/**
+ * @class MedianHistogramOp
+ * @brief Layer 5 Ref03 Op: точная медиана через 4-pass byte-histogram (float input).
+ *
+ * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
+ * @note Требует #if ENABLE_ROCM. Зависит от kernels histogram_median_pass + find_median_bucket.
+ * @note Эффективен для n_point > kHistogramThreshold (≈100K). Для меньших — MedianRadixSortOp.
+ * @see statistics::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
+ * @see statistics::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).
+ */
 class MedianHistogramOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "MedianHistogram"; }
 
   /**
-   * @brief Execute histogram-based median on float magnitudes
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить histogram-based median на float-магнитудах.
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Reads kMagnitudes (float), writes kMediansCompact (float[beam_count]).
+   * Читает kMagnitudes (float), пишет kMediansCompact (float[beam_count]).
    */
   void Execute(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count);

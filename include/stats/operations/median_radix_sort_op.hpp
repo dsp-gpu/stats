@@ -1,23 +1,53 @@
 #pragma once
 
-/**
- * @file median_radix_sort_op.hpp
- * @brief MedianRadixSortOp — median via rocPRIM segmented radix sort
- *
- * Ref03 Layer 5: Concrete Operation.
- * Extracted from: ExecuteMagnitudesKernel + ExecuteMedianSort + ExecuteExtractMediansKernel.
- *
- * Pipeline: compute_magnitudes → segmented_radix_sort → extract_medians
- * Used when n_point <= kHistogramThreshold (small data — sort is faster).
- *
- * Kernels: compute_magnitudes, extract_medians
- * External: gpu_sort::ExecuteSort (statistics_sort_gpu.hip — not modified)
- * Private buffers: BufferSet<3> — sort_buf, sort_temp_buf, offsets_buf
- * Shared buffers: reads kInput, writes kMagnitudes + kMediansCompact
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-14
- */
+// ============================================================================
+// MedianRadixSortOp — медиана |z| через rocPRIM segmented radix sort
+//                     (Layer 5 Ref03)
+//
+// ЧТО:    Concrete Op: универсальная медиана через полную segmented sort
+//         всех элементов. Two execution paths:
+//           - Execute(beam, n_point)      — complex input: magnitudes + sort + extract
+//           - ExecuteFloat(beam, n_point) — float magnitudes готовы: только sort + extract
+//         Pipeline: compute_magnitudes → gpu_sort::ExecuteSort (rocPRIM) →
+//         extract_medians (берёт средний элемент каждого сегмента).
+//
+// ЗАЧЕМ:  Универсальная стратегия median, работает для любых n_point.
+//         StatisticsProcessor использует её для n_point ≤ kHistogramThreshold
+//         (=100K) — на малых данных rocPRIM segmented_radix_sort быстрее
+//         чем 4 прохода histogram (меньше overhead, лучше cache locality).
+//         Также используется внутри SnrEstimatorOp для медианы SNR по
+//         антеннам после CFAR (n_ant_out обычно ≤ 50, sort оптимален).
+//
+// ПОЧЕМУ: - Layer 5 Ref03: третья стратегия median, отдельный Op (SRP).
+//           Все 3 стратегии (Histogram / HistogramComplex / RadixSort) имеют
+//           одинаковый contract — пишут kMediansCompact, фасад выбирает
+//           без if'ов в hot-path.
+//         - rocPRIM (а не CUB / thrust) — единственный разрешённый sort
+//           под ROCm (см. rule 09-rocm-only). Segmented variant сортирует
+//           все beam'ы за ОДИН device-call.
+//         - Two-step alloc (Query → Allocate temp) — обязательная семантика
+//           rocPRIM: размер temp storage runtime-зависим.
+//         - Buffer reuse: AllocatePrivateBuffers рано-возвращается, если
+//           beam_count×n_point не изменились (Hot-loop без re-alloc).
+//         - extract_medians — отдельный kernel вместо host-side: даже один
+//           hipMemcpyDtoH per beam'у дороже, чем launch одного kernel
+//           (P0-B optimization из statistics_kernels_rocm.hpp).
+//         - Offsets uploaded async — простой stride n_point, можно было
+//           использовать iterator, но явные offsets гибче для будущих
+//           variable-length сегментов.
+//
+// Использование:
+//   statistics::MedianRadixSortOp ms;
+//   ms.Initialize(ctx);
+//   // Complex путь:
+//   ms.Execute(beam_count, n_point);
+//   // Float путь (kMagnitudes уже заполнен):
+//   ms.ExecuteFloat(beam_count, n_point);
+//
+// История:
+//   - Создан:  2026-03-14 (Ref03 Layer 5, объединил 3 helper'а в один Op)
+//   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -34,17 +64,28 @@
 
 namespace statistics {
 
+/**
+ * @class MedianRadixSortOp
+ * @brief Layer 5 Ref03 Op: медиана |z| через rocPRIM segmented radix sort (универсальный путь).
+ *
+ * @note Lazy + cached buffer allocation (BufferSet<3>: sort_buf, sort_temp, offsets).
+ * @note Требует #if ENABLE_ROCM. Зависит от rocPRIM (через gpu_sort::ExecuteSort).
+ * @note Эффективен для n_point ≤ kHistogramThreshold (≈100K). Для больших — Histogram-варианты.
+ * @note Two paths: Execute (complex input) + ExecuteFloat (магнитуды готовы).
+ * @see statistics::gpu_sort::ExecuteSort — rocPRIM-обёртка (компилируется hipcc).
+ * @see statistics::MedianHistogramOp / MedianHistogramComplexOp — альтернатива для больших n.
+ */
 class MedianRadixSortOp : public drv_gpu_lib::GpuKernelOp {
 public:
   const char* Name() const override { return "MedianRadixSort"; }
 
   /**
-   * @brief Execute radix sort median pipeline (complex input)
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить radix-sort медиану (complex input — full pipeline).
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Full pipeline: magnitudes → sort → extract_medians.
-   * Reads kInput, writes kMediansCompact (float[beam_count]).
+   * Pipeline: magnitudes → sort → extract_medians.
+   * Читает kInput, пишет kMediansCompact (float[beam_count]).
    */
   void Execute(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count, n_point);
@@ -56,11 +97,11 @@ public:
   }
 
   /**
-   * @brief Execute radix sort median on pre-computed magnitudes (float input)
-   * @param beam_count Number of beams
-   * @param n_point Samples per beam
+   * @brief Выполнить radix-sort медиану по уже-вычисленным float magnitudes.
+   * @param beam_count Число beam'ов.
+   * @param n_point    Сэмплов на beam.
    *
-   * Skips magnitudes kernel. Reads kMagnitudes, writes kMediansCompact.
+   * Без compute_magnitudes. Читает kMagnitudes, пишет kMediansCompact.
    */
   void ExecuteFloat(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count, n_point);
