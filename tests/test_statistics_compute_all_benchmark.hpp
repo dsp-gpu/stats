@@ -1,18 +1,24 @@
 #pragma once
 
+// ============================================================================
+// test_statistics_compute_all_benchmark — бенчмарк StatisticsProcessor::ComputeAll
+//
+// ЧТО:    4×65536 complex float. Breakdown: Upload|Welford_Fused|Median.
+//         Раздельные замеры ComputeStatistics + ComputeMedian (std::chrono).
+// ЗАЧЕМ:  ComputeAll — основная операция stats в pipeline. Регрессия здесь
+//         = замедление всего radar pipeline.
+// ПОЧЕМУ: Без AMD GPU → [SKIP]. ProfilingFacade для вывода.
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_statistics_compute_all_benchmark.hpp
- * @brief Test runner: StatisticsProcessor::ComputeAll — ROCm benchmark
- *
- * Запускает бенчмарк ComputeAll (4 beams × 65536 complex float, CPU path).
- * Выводит breakdown: Upload | Welford_Fused | Median через GPUProfiler.
- * Для сравнения дополнительно измеряет раздельные вызовы
- * ComputeStatistics + ComputeMedian через std::chrono.
- *
- * Если нет AMD GPU — выводит [SKIP] и не падает.
- *
- * @author Кодо (AI Assistant)
- * @date 2026-03-20
+ * @brief Runner для StatisticsProcessor::ComputeAll benchmark — 4×65536 complex float (CPU path).
+ * @note Test fixture, не публичный API. Запускается через all_test.hpp. ROCm-only.
+ *       Breakdown: Upload | Welford_Fused | Median (через ProfilingFacade).
+ *       Дополнительно измеряет раздельные ComputeStatistics + ComputeMedian (std::chrono) для сравнения.
+ *       Без AMD GPU — [SKIP], не падает.
  * @see statistics_compute_all_benchmark.hpp, TASK_statistics_compute_all.md
  */
 

@@ -1,27 +1,23 @@
 #pragma once
 
-/**
- * @file statistics_compute_all_benchmark.hpp
- * @brief ROCm benchmark-класс для StatisticsProcessor::ComputeAll (GpuBenchmarkBase)
- *
- * ComputeAllBenchmarkROCm — times ComputeAll() (CPU path: 4 beams × 65536 points)
- * Per-event breakdown: Upload | Welford_Fused | Median
- *
- * Компилируется только при ENABLE_ROCM=1.
- *
- * Использование:
- * @code
- *   statistics::StatisticsProcessor proc(backend);
- *   test_statistics_compute_all_benchmark::ComputeAllBenchmarkROCm bench(
- *       backend, proc, params, data);
- *   bench.Run();
- *   bench.Report();
- * @endcode
- *
- * @author Кодо (AI Assistant)
- * @date 2026-03-20
- * @see GpuBenchmarkBase, MemoryBank/tasks/TASK_statistics_compute_all.md
- */
+// ============================================================================
+// ComputeAllBenchmarkROCm — GPU benchmark для StatisticsProcessor::ComputeAll
+//
+// ЧТО:    Замер ComputeAll() на CPU-path (4 beams × 65536 complex float).
+//         Per-event breakdown через ProfilingFacade: Upload | Welford_Fused | Median.
+//         Pre-allocated GPU buffers переиспользуются между итерациями.
+//
+// ЗАЧЕМ:  ComputeAll объединяет 3 стадии (mean+std через Welford, медиану) в один
+//         pipeline — нужно подтвердить выигрыш vs раздельные ComputeStatistics +
+//         ComputeMedian (меньше launch overhead, общий upload).
+//
+// ПОЧЕМУ: Наследник GpuBenchmarkBase (Template Method GoF) — общий skeleton
+//         warmup/runs/report задан базой, специфика в ExecuteKernel*.
+//         BatchRecord для всех событий (W1: меньше contention с воркером
+//         ProfilingFacade чем N × Record).
+//
+// История: Создан: 2026-03-20
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -36,6 +32,13 @@ namespace test_statistics_compute_all_benchmark {
 
 // ─── Benchmark: StatisticsProcessor::ComputeAll() ─────────────────────────
 
+/**
+ * @class ComputeAllBenchmarkROCm
+ * @brief GpuBenchmarkBase-наследник: замер ComputeAll() с per-stage breakdown.
+ *
+ * @note ROCm-only (#if ENABLE_ROCM).
+ * @see drv_gpu_lib::GpuBenchmarkBase, statistics::StatisticsProcessor::ComputeAll
+ */
 class ComputeAllBenchmarkROCm : public drv_gpu_lib::GpuBenchmarkBase {
 public:
   ComputeAllBenchmarkROCm(

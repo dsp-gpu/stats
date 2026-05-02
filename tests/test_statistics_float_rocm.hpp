@@ -1,23 +1,24 @@
 #pragma once
 
+// ============================================================================
+// test_statistics_float_rocm — тесты StatisticsProcessor float API (ROCm)
+//
+// ЧТО:    6 сценариев: ComputeStatisticsFloat, ComputeMedianFloat (vector<float>
+//         и void* GPU), pipeline ProcessMagnitude→Statistics/Median.
+// ЗАЧЕМ:  Float API — отдельный путь (не complex). Ошибки здесь = неверная
+//         статистика в float-only pipeline (radar power estimation).
+// ПОЧЕМУ: GPU-to-GPU pipeline без промежуточного D2H copy. test_utils.
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_statistics_float_rocm.hpp
- * @brief Tests for StatisticsProcessor float API + ProcessMagnitude→Statistics pipeline
- *
- * ✅ MIGRATED to test_utils (2026-03-21, CppTest-06)
- *
- * Tests:
- * 1. ComputeStatisticsFloat(vector<float>) -- known magnitudes
- * 2. ComputeMedianFloat(vector<float>)     -- sorted sequence
- * 3. ComputeStatisticsFloat(void*)         -- GPU managed memory
- * 4. ComputeMedianFloat(void*)             -- GPU managed memory
- * 5. Pipeline: ProcessMagnitude → ComputeStatisticsFloat (GPU-to-GPU)
- * 6. Pipeline: ProcessMagnitudeToGPU → ComputeMedianFloat (GPU-to-GPU)
- *
- * IMPORTANT: Compiles ONLY with ENABLE_ROCM=1.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-11 (migrated 2026-03-21)
+ * @brief Тесты StatisticsProcessor float API + связки ProcessMagnitude→Statistics.
+ * @note Test fixture, не публичный API. Запускается через all_test.hpp. ROCm-only.
+ *       6 сценариев: ComputeStatisticsFloat / ComputeMedianFloat (vector<float> и void* GPU)
+ *       + GPU-to-GPU pipeline ProcessMagnitude → Statistics/Median.
+ *       Мигрирован на test_utils (CppTest-06).
  */
 
 #if ENABLE_ROCM

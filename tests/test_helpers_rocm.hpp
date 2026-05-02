@@ -1,22 +1,23 @@
 #pragma once
 
+// ============================================================================
+// test_helpers_rocm — хелперы для ROCm-тестов (hipMallocManaged)
+//
+// ЧТО:    Утилиты для работы с unified memory (hipMallocManaged):
+//         CPU заполняет данные, GPU читает без hipMemcpy.
+// ЗАЧЕМ:  Упрощает setup маленьких тестовых датасетов — без явного H2D copy.
+// ПОЧЕМУ: Только для малых датасетов (unified memory медленнее hipMalloc+Memcpy).
+//         Caller владеет указателем — обязан вызвать hipFree().
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_helpers_rocm.hpp
- * @brief Test helpers for ROCm tests using hipMallocManaged (unified memory)
- *
- * Unified memory (hipMallocManaged) allows CPU to fill data and GPU to read
- * it directly without explicit hipMemcpy. Use for small test datasets only.
- *
- * Usage:
- *   void* ptr = AllocateManagedForTest(n * sizeof(std::complex<float>));
- *   auto* data = static_cast<std::complex<float>*>(ptr);
- *   // fill data on CPU...
- *   auto input = MakeManagedInput(ptr, beam_count, n_point);
- *   // call ProcessMagnitude(input.data, params, input.gpu_memory_bytes)
- *   hipFree(ptr);  // caller is responsible
- *
- * @author Kodo (AI Assistant)
- * @date 2026-03-11
+ * @brief Хелперы для ROCm-тестов на базе hipMallocManaged (unified memory).
+ * @note Test fixture, не публичный API. ROCm-only.
+ *       Unified memory: CPU заполняет, GPU читает без hipMemcpy. Только для малых датасетов.
+ *       Caller владеет указателем — обязан вызвать hipFree() после использования.
  */
 
 #if ENABLE_ROCM

@@ -1,24 +1,23 @@
 #pragma once
 
+// ============================================================================
+// test_snr_estimator_rocm — тесты SNREstimator (SNR_08, 7 сценариев)
+//
+// ЧТО:    noise-only (CFAR artifact 8-15 dB), CW+AWGN (SNR>40 dB),
+//         negative freq, Scenario A/B/C (до 9000×10000).
+// ЗАЧЕМ:  SNREstimator — в radar pipeline. Ошибка SNR = неверное обнаружение цели.
+// ПОЧЕМУ: Assert'ы — диапазоны, не точные значения (зависит от noise seed).
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_snr_estimator_rocm.hpp
- * @brief C++ tests for SNR-estimator (SNR_08) — 7 тестов test_01..test_06b
- *
- * ⚠️ КОД ТОЛЬКО НАПИСАН — запуск в понедельник на Debian/AMD (нет GPU под Windows).
- *
- * Tests:
- *   test_01 — noise only → CFAR artifact ≈ 8-15 dB
- *   test_02 — CW + noise SNR_in=20 dB → snr_db_global > 40 dB
- *   test_03 — negative freq + search_full_spectrum toggle
- *   test_04 — Scenario A (2500 ant × 5000 samp)
- *   test_05 — Scenario B (256 × 1.3M) = 2.66 GB (GPU-only)
- *   test_06 — Scenario B noise only
- *   test_06b — Scenario C (9000 × 10000)
- *
- * Все assert'ы используют диапазоны (физика имеет разброс), НЕ точные значения.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
+ * @brief Тесты SNR-estimator (SNR_08) — 7 сценариев (test_01..test_06b).
+ * @note Test fixture, не публичный API. Запускается через all_test.hpp. ROCm-only.
+ *       Сценарии: noise-only (CFAR artifact 8-15 dB), CW+AWGN (SNR>40 dB),
+ *       negative freq, Scenario A/B/C (до 9000×10000). Assert'ы — диапазоны, не точные.
+ *       Запуск на Debian/AMD (нет GPU под Windows).
  */
 
 #if ENABLE_ROCM

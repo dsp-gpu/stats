@@ -1,14 +1,21 @@
 #pragma once
 
+// ============================================================================
+// snr_test_helpers — утилиты для SNR-тестов (SNR_08)
+//
+// ЧТО:    Генерация CW+AWGN сигналов, GPU upload, shared ROCm backend
+//         для test_snr_estimator_rocm и snr_estimator_benchmark.
+// ЗАЧЕМ:  Shared helpers исключают дублирование setup-кода между SNR-тестами.
+// ПОЧЕМУ: ROCm-only. GPU upload через hipMemcpy (не unified memory).
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file snr_test_helpers.hpp
- * @brief Test utilities for SNR-estimator (SNR_08)
- *
- * Генерация CW/AWGN сигналов, GPU upload helpers, shared backend.
- * Namespace: snr_test_helpers
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
+ * @brief Утилиты для SNR-тестов (SNR_08) — генерация CW/AWGN, GPU upload, shared backend.
+ * @note Test fixture, не публичный API. Namespace `snr_test_helpers`. ROCm-only.
+ *       Используется test_snr_estimator_rocm.hpp + snr_estimator_benchmark.hpp.
  */
 
 #if ENABLE_ROCM

@@ -1,32 +1,24 @@
 #pragma once
 
+// ============================================================================
+// test_statistics_rocm — тесты StatisticsProcessor (15 сценариев, ROCm)
+//
+// ЧТО:    Welford (single/multi-beam, constant), median (linear/histogram/radix),
+//         ComputeAll (CPU/GPU/Float/edge cases), GPU vs CPU timing.
+// ЗАЧЕМ:  StatisticsProcessor — центральный модуль stats. 15 сценариев
+//         покрывают все ветки MedianStrategy и Welford corner cases.
+// ПОЧЕМУ: Эталон CppTest-06. test_utils. ENABLE_ROCM.
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_statistics_rocm.hpp
- * @brief Tests for StatisticsProcessor -- mean, median, variance, std (ROCm)
- *
- * ✅ MIGRATED to test_utils (2026-03-21, CppTest-06 etalon)
- *
- * Tests:
- *  1. mean_single_beam        -- sinusoid, complex mean ≈ 0
- *  2. mean_multi_beam         -- 4 beams, per-beam means
- *  3. welford_statistics      -- mean_mag, variance, std vs CPU
- *  4. median_linear           -- sorted magnitudes, verify median
- *  5. gpu_input               -- ComputeStatistics(void*)
- *  6. mean_constant           -- constant signal (mean = constant)
- *  7. benchmark_median        -- GPU vs CPU sort timing
- *  8. histogram_median_basic  -- 200K points, histogram path
- *  9. histogram_median_multi  -- 4×500K, compare with CPU sort
- * 10. histogram_median_float  -- ComputeMedianFloat path
- * 11. histogram_vs_radix      -- timing benchmark
- * 12. compute_all_cpu         -- ComputeAll vs separate calls
- * 13. compute_all_gpu         -- ComputeAll(void*) path
- * 14. compute_all_float       -- ComputeAllFloat path
- * 15. compute_all_edge_cases  -- boundary conditions
- *
- * IMPORTANT: Compiles ONLY with ENABLE_ROCM=1.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-02-23 (migrated 2026-03-21)
+ * @brief Тесты StatisticsProcessor — mean, median, variance, std (15 сценариев).
+ * @note Test fixture, не публичный API. Запускается через all_test.hpp. ROCm-only.
+ *       Покрывает: Welford (single/multi-beam, constant), median (linear / histogram / radix),
+ *       ComputeAll (CPU/GPU/Float/edge cases), GPU vs CPU timing.
+ *       Мигрирован на test_utils (CppTest-06 etalon).
  */
 
 #if ENABLE_ROCM

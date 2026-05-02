@@ -1,22 +1,23 @@
 #pragma once
 
+// ============================================================================
+// test_snr_estimator_benchmark — runner SnrEstimatorBenchmark (4 сценария)
+//
+// ЧТО:    4 сценария: Py-Small (5×1.3M), A (2500×5000), B (256×1.3M = 2.66GB),
+//         C (9000×10000). Breakdown: Upload|Welford_Fused|Median.
+// ЗАЧЕМ:  SNREstimator — в radar hot path. Бенчмарк детектирует регрессии.
+// ПОЧЕМУ: Данные генерируются на GPU (hipMalloc) — CPU 2.66GB убил бы RAM.
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file test_snr_estimator_benchmark.hpp
- * @brief SNR-estimator benchmark runner (SNR_09)
- *
- * Запускает SnrEstimatorBenchmark на 4 сценариях:
- *   Py-Small   (5 ant × 1.3M samp)      — лёгкий Python сценарий
- *   Scenario A (2500 × 5000)
- *   Scenario B (256 × 1.3M, 2.66 GB)    — главный замер
- *   Scenario C (9000 × 10000)
- *
- * Данные для больших сценариев генерируются прямо на GPU (hipMalloc) —
- * CPU vector 2.66 GB убил бы RAM.
- *
- * ⚠️ КОД НАПИСАН — запуск в понедельник на Debian/AMD.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
+ * @brief Runner для SnrEstimatorBenchmark — 4 сценария (Py-Small / A / B / C).
+ * @note Test fixture, не публичный API. Запускается через all_test.hpp. ROCm-only.
+ *       Сценарии: Py-Small (5×1.3M), A (2500×5000), B (256×1.3M = 2.66 GB — главный
+ *       замер), C (9000×10000). Большие данные генерируются на GPU (hipMalloc) —
+ *       CPU vector 2.66 GB убил бы RAM.
  */
 
 #if ENABLE_ROCM

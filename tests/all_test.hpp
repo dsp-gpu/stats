@@ -1,16 +1,22 @@
 #pragma once
 
+// ============================================================================
+// stats_all_test — агрегатор тестов модуля stats
+//
+// ЧТО:    Единая точка подключения всех test_*.hpp модуля stats.
+//         Все тесты под #if ENABLE_ROCM.
+// ЗАЧЕМ:  main.cpp вызывает только этот файл — не отдельные test_*.hpp.
+//         Закомментированный include = выключенный тест без правки main.cpp.
+// ПОЧЕМУ: Паттерн all_test.hpp (правило 15-cpp-testing.md).
+//
+// История: Создан: 2026-04-12
+// ============================================================================
+
 /**
  * @file all_test.hpp
- * @brief Test index for statistics module
- *
- * main.cpp calls this file -- NOT individual tests directly.
- * Enable/disable tests here.
- *
- * NOTE: Statistics is ROCm-only. All tests are under #if ENABLE_ROCM.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-02-23
+ * @brief Индекс тестов модуля stats — единая точка включения для main.cpp.
+ * @note Test fixture, не публичный API. Запускается через main.cpp → statistics_all_test::run().
+ *       ROCm-only: все тесты под #if ENABLE_ROCM. Закомментированные include — отключённые сценарии.
  */
 
 #if ENABLE_ROCM

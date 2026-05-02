@@ -1,17 +1,23 @@
 #pragma once
 
-/**
- * @file snr_estimator_benchmark.hpp
- * @brief SnrEstimatorBenchmark — benchmark class для SNR-estimator (SNR_09)
- *
- * Наследник GpuBenchmarkBase. Измеряет end-to-end время ComputeSnrDb()
- * через hipEvent пары → RecordROCmEvent → GPUProfiler.
- *
- * ⚠️ КОД НАПИСАН — запуск в понедельник на Debian/AMD.
- *
- * @author Kodo (AI Assistant)
- * @date 2026-04-09
- */
+// ============================================================================
+// SnrEstimatorBenchmark — GPU benchmark для StatisticsProcessor::ComputeSnrDb (SNR_09)
+//
+// ЧТО:    Измеряет end-to-end время SNR-estimator pipeline через hipEvent-пары,
+//         собирает события через ProfilingFacade::RecordROCmEvent.
+//         Pre-allocated GPU input на инстанс — без upload в каждой итерации.
+//
+// ЗАЧЕМ:  В сценариях SNR_09 (256×1.3M = 2.66 GB) разовый ComputeSnrDb идёт
+//         десятки мс. Нужно стабильное измерение чистой работы оператора
+//         (warmup → N runs → агрегация) без шума от аллокаций / upload.
+//
+// ПОЧЕМУ: Наследник GpuBenchmarkBase (Template Method GoF) — invariant skeleton
+//         (Run/Report) задан базой, конкретика в ExecuteKernel / ExecuteKernelTimed.
+//         hipEvent — единственный точный GPU-таймер; ScopedHipEvent гарантирует
+//         RAII-освобождение при exception в hot-path.
+//
+// История: Создан: 2026-04-09
+// ============================================================================
 
 #if ENABLE_ROCM
 
@@ -32,10 +38,11 @@
 namespace test_snr_estimator {
 
 /**
- * @brief SnrEstimatorBenchmark — measures ComputeSnrDb() end-to-end.
+ * @class SnrEstimatorBenchmark
+ * @brief GpuBenchmarkBase-наследник для замера ComputeSnrDb() через hipEvent.
  *
- * Pre-allocated GPU input per instance (так benchmark measures
- * чистую работу SnrEstimatorOp pipeline, без upload от каждой итерации).
+ * @note ROCm-only (#if ENABLE_ROCM). Caller владеет pre-allocated gpu_input.
+ * @see drv_gpu_lib::GpuBenchmarkBase, statistics::StatisticsProcessor::ComputeSnrDb
  */
 class SnrEstimatorBenchmark : public drv_gpu_lib::GpuBenchmarkBase {
 public:
