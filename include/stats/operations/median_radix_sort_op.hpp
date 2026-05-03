@@ -77,12 +77,20 @@ namespace statistics {
  */
 class MedianRadixSortOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "MedianRadixSort" (статический литерал).
+   *   @test_check std::string(result) == "MedianRadixSort"
+   */
   const char* Name() const override { return "MedianRadixSort"; }
 
   /**
    * @brief Выполнить radix-sort медиану (complex input — full pipeline).
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Pipeline: magnitudes → sort → extract_medians.
    * Читает kInput, пишет kMediansCompact (float[beam_count]).
@@ -99,7 +107,9 @@ public:
   /**
    * @brief Выполнить radix-sort медиану по уже-вычисленным float magnitudes.
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Без compute_magnitudes. Читает kMagnitudes, пишет kMediansCompact.
    */

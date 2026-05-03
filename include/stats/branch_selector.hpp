@@ -76,6 +76,7 @@ public:
    * @param snr_db  Измеренный SNR_db (от StatisticsProcessor::ComputeSnrDb).
    * @param thr     Пороги (из SnrEstimationConfig::thresholds).
    * @return Новая (или прежняя, если не пересекли границу) ветка.
+   *   @test_check result == BranchType::{Low|Mid|High}; NaN/Inf оставляет prev state
    */
   BranchType Select(float snr_db, const BranchThresholds& thr) {
     // Защита от NaN/Inf: невалидное измерение → оставляем текущую ветку
@@ -106,10 +107,20 @@ public:
     return current_;
   }
 
-  /// Получить текущую ветку без изменения state.
+  /**
+   * @brief Возвращает текущую ветку SNR без изменения внутреннего состояния.
+   *
+   * @return Текущее значение `current_` (Low/Mid/High).
+   *   @test_check result == BranchType::{Low|Mid|High}
+   */
   BranchType Current() const { return current_; }
 
-  /// Сбросить state (например, в начале новой сессии измерений).
+  /**
+   * @brief Сбрасывает state к указанной ветке (по умолчанию Low).
+   *
+   * @param to Целевая ветка для инициализации state.
+   *   @test { values=[BranchType::Low, BranchType::Mid, BranchType::High] }
+   */
   void Reset(BranchType to = BranchType::Low) { current_ = to; }
 
 private:

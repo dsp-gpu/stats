@@ -64,15 +64,25 @@ namespace statistics {
  */
 class MedianHistogramComplexOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "MedianHistogramComplex" (статический литерал).
+   *   @test_check std::string(result) == "MedianHistogramComplex"
+   */
   const char* Name() const override { return "MedianHistogramComplex"; }
 
   /**
    * @brief Выполнить histogram-based median на complex-входе (|z| on-the-fly).
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Читает kInput (complex<float>), пишет kMediansCompact (float[beam_count]).
    * |z| вычисляется внутри kernel'а гистограммы (отдельного буфера нет).
+   * @throws std::runtime_error при сбое hipModuleLaunchKernel или DtoH/HtoD копирования.
+   *   @test_check throws on hipModuleLaunchKernel != hipSuccess || hipMemcpy failure
    */
   void Execute(size_t beam_count, size_t n_point) {
     AllocatePrivateBuffers(beam_count);

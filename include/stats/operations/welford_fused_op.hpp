@@ -61,15 +61,25 @@ namespace statistics {
  */
 class WelfordFusedOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "WelfordFused" (статический литерал).
+   *   @test_check std::string(result) == "WelfordFused"
+   */
   const char* Name() const override { return "WelfordFused"; }
 
   /**
    * @brief Выполнить single-pass Welford по complex-входу.
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Читает kInput (complex<float>), пишет kResult (5 floats per beam:
    * mean_re, mean_im, mean_mag, variance, std_dev).
+   * @throws std::runtime_error при сбое hipModuleLaunchKernel("welford_fused").
+   *   @test_check throws on hipModuleLaunchKernel != hipSuccess
    */
   void Execute(size_t beam_count, size_t n_point) {
     unsigned int bc = static_cast<unsigned int>(beam_count);

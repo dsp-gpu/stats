@@ -123,14 +123,47 @@ public:
   // Public API -- CPU data (upload -> compute -> download)
   // =========================================================================
 
+  /**
+   * @brief Complex mean per beam из CPU-данных. H2D → MeanReductionOp → D2H.
+   *
+   * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MeanResult с complex mean per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MeanResult> ComputeMean(
       const std::vector<std::complex<float>>& data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Median(|z|) per beam из CPU-данных. Стратегия выбирается по n_point (kHistogramThreshold=100K).
+   *
+   * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MedianResult с median(|z|) per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MedianResult> ComputeMedian(
       const std::vector<std::complex<float>>& data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Welford mean+variance+std per beam из CPU-данных (single-pass через WelfordFusedOp).
+   *
+   * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] StatisticsResult: complex mean + var(|z|) + std(|z|) + mean(|z|).
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<StatisticsResult> ComputeStatistics(
       const std::vector<std::complex<float>>& data,
       const StatisticsParams& params);
@@ -139,14 +172,47 @@ public:
   // Public API -- GPU data (already on device)
   // =========================================================================
 
+  /**
+   * @brief Complex mean per beam из GPU-данных (D2D → MeanReductionOp → D2H), без H2D upload.
+   *
+   * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MeanResult с complex mean per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MeanResult> ComputeMean(
       void* gpu_data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Median(|z|) per beam из GPU-данных (без H2D). Стратегия выбирается по n_point.
+   *
+   * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MedianResult с median(|z|) per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MedianResult> ComputeMedian(
       void* gpu_data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Welford mean+variance+std per beam из GPU-данных (без H2D), single-pass complex.
+   *
+   * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] StatisticsResult: complex mean + var(|z|) + std(|z|) + mean(|z|).
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<StatisticsResult> ComputeStatistics(
       void* gpu_data,
       const StatisticsParams& params);
@@ -157,12 +223,38 @@ public:
 
   /// CPU complex: один upload → Welford + Median → FullStatisticsResult per beam.
   /// Убирает двойной H2D vs последовательных ComputeStatistics + ComputeMedian.
+  /**
+   * @brief Welford + Median за один H2D upload из CPU-данных. Возвращает FullStatisticsResult.
+   *
+   * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   * @param prof_events Сборщик ROCm-событий профилирования (опционально).
+   *   @test { values=[nullptr] }
+   *
+   * @return Массив [beam_count] FullStatisticsResult: mean + var + std + median(|z|).
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<FullStatisticsResult> ComputeAll(
       const std::vector<std::complex<float>>& data,
       const StatisticsParams& params,
       StatisticsROCmProfEvents* prof_events = nullptr);
 
   /// GPU complex (production-путь): D2D один раз → Welford + Median.
+  /**
+   * @brief Welford + Median за один D2D из GPU-данных (production-путь, без H2D).
+   *
+   * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   * @param prof_events Сборщик ROCm-событий профилирования (опционально).
+   *   @test { values=[nullptr] }
+   *
+   * @return Массив [beam_count] FullStatisticsResult: mean + var + std + median(|z|).
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<FullStatisticsResult> ComputeAll(
       void* gpu_data,
       const StatisticsParams& params,
@@ -170,12 +262,36 @@ public:
 
   /// GPU float magnitudes: kMagnitudes → WelfordFloat + Median.
   /// Note: mean field всегда {0, 0} (float-путь не имеет complex mean).
+  /**
+   * @brief WelfordFloat + Median по уже-вычисленным GPU float-магнитудам. mean всегда {0,0}.
+   *
+   * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   * @param prof_events Сборщик ROCm-событий профилирования (опционально).
+   *   @test { values=[nullptr] }
+   *
+   * @return Массив [beam_count] FullStatisticsResult с mean={0,0}, остальное заполнено.
+   *   @test_check result.size() == params.beam_count && result[0].mean == complex(0,0)
+   */
   std::vector<FullStatisticsResult> ComputeAllFloat(
       void* gpu_float_data,
       const StatisticsParams& params,
       StatisticsROCmProfEvents* prof_events = nullptr);
 
   /// CPU float magnitudes: convenience-обёртка, делает upload и вызывает GPU-overload.
+  /**
+   * @brief Convenience-обёртка: H2D upload float-магнитуд → GPU-overload ComputeAllFloat.
+   *
+   * @param data CPU float [beam_count × n_point] (магнитуды |z|).
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] FullStatisticsResult с mean={0,0}, остальное заполнено.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<FullStatisticsResult> ComputeAllFloat(
       const std::vector<float>& data,
       const StatisticsParams& params);
@@ -184,10 +300,32 @@ public:
   // Public API -- GPU float data (magnitudes already computed)
   // =========================================================================
 
+  /**
+   * @brief Welford по уже-вычисленным GPU float-магнитудам. mean всегда {0,0}.
+   *
+   * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] StatisticsResult с mean={0,0}, var/std/mean_mag заполнено.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<StatisticsResult> ComputeStatisticsFloat(
       void* gpu_float_data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Median по уже-вычисленным GPU float-магнитудам (без compute_magnitudes стадии).
+   *
+   * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MedianResult с median(|z|) per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MedianResult> ComputeMedianFloat(
       void* gpu_float_data,
       const StatisticsParams& params);
@@ -196,10 +334,32 @@ public:
   // Public API -- CPU float data (vector<float> wrappers for tests)
   // =========================================================================
 
+  /**
+   * @brief Welford по CPU float-магнитудам (convenience: H2D upload → GPU-overload).
+   *
+   * @param data CPU float [beam_count × n_point] (магнитуды |z|).
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] StatisticsResult с mean={0,0}, var/std/mean_mag заполнено.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<StatisticsResult> ComputeStatisticsFloat(
       const std::vector<float>& data,
       const StatisticsParams& params);
 
+  /**
+   * @brief Median по CPU float-магнитудам (convenience: H2D upload → GPU-overload).
+   *
+   * @param data CPU float [beam_count × n_point] (магнитуды |z|).
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   * @param params Параметры обработки (beam_count, n_point, memory_limit).
+   *   @test_ref StatisticsParams
+   *
+   * @return Массив [beam_count] MedianResult с median(|z|) per beam.
+   *   @test_check result.size() == params.beam_count
+   */
   std::vector<MedianResult> ComputeMedianFloat(
       const std::vector<float>& data,
       const StatisticsParams& params);
@@ -214,12 +374,17 @@ public:
    * Pipeline: upload → gather → FFT(Hann)|X|² → CFAR → median.
    *
    * @param data        CPU complex<float> [n_antennas × n_samples] (row-major).
+   *   @test { size=[100..1300000], value=6000, unit="elements" }
    * @param n_antennas  Число антенн.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_samples   Сэмплов на антенну.
+   *   @test { range=[100..1300000], value=6000 }
    * @param config      Конфиг SNR-estimator (см. snr_defaults::).
+   *   @test_ref SnrEstimationConfig
    * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
    *
    * @note Result НЕ содержит BranchType — классификация через BranchSelector.
+   *   @test_check std::isfinite(result.snr_db_global) && result.used_antennas > 0 && result.used_bins > 0
    */
   SnrEstimationResult ComputeSnrDb(
       const std::vector<std::complex<float>>& data,
@@ -233,9 +398,15 @@ public:
    * Pipeline: gather → FFT(Hann)|X|² → CFAR → median (данные уже на GPU).
    *
    * @param gpu_data    GPU complex<float>* [n_antennas × n_samples].
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
    * @param n_antennas  Число антенн.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_samples   Сэмплов на антенну.
+   *   @test { range=[100..1300000], value=6000 }
    * @param config      Конфиг SNR-estimator.
+   *   @test_ref SnrEstimationConfig
+   * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
+   *   @test_check std::isfinite(result.snr_db_global) && result.used_antennas > 0 && result.used_bins > 0
    */
   SnrEstimationResult ComputeSnrDb(
       void* gpu_data,

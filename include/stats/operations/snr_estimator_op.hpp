@@ -88,6 +88,12 @@ namespace statistics {
  */
 class SnrEstimatorOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "SnrEstimator" (статический литерал).
+   *   @test_check std::string(result) == "SnrEstimator"
+   */
   const char* Name() const override { return "SnrEstimator"; }
 
   /**
@@ -106,13 +112,18 @@ public:
    * @brief Выполнить полный SNR pipeline: gather → FFT|X|² → CFAR → median.
    *
    * @param gpu_input    Complex<float>* [n_antennas × n_samples] на GPU.
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
    * @param n_antennas   Число входных антенн.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_samples    Сэмплов на антенну.
+   *   @test { range=[100..1300000], value=6000 }
    * @param config       Validated SnrEstimationConfig (поля 0 → auto-defaults).
+   *   @test_ref SnrEstimationConfig
    * @param out_result   Result struct (заполняется этим методом, БЕЗ BranchType).
    * @throws std::invalid_argument если gpu_input null, или вырожденные размеры,
    *         или ref window ≥ n_actual после auto-decimation.
    * @throws std::runtime_error если SetupFft не был вызван, или kernel-launch упал.
+   *   @test_check throws std::invalid_argument on (gpu_input==nullptr) || (n_actual==0) || (n_ant_out==0) || (2*(guard+ref)+1 >= n_actual); throws std::runtime_error if SetupFft не вызван
    */
   void Execute(void* gpu_input,
                uint32_t n_antennas, uint32_t n_samples,

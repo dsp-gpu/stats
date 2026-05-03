@@ -60,15 +60,25 @@ namespace statistics {
  */
 class WelfordFloatOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "WelfordFloat" (статический литерал).
+   *   @test_check std::string(result) == "WelfordFloat"
+   */
   const char* Name() const override { return "WelfordFloat"; }
 
   /**
    * @brief Выполнить Welford по float-магнитудам.
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Читает kMagnitudes (float), пишет kResult (5 floats per beam:
    * mean_re=0, mean_im=0, mean_mag, variance, std_dev).
+   * @throws std::runtime_error при сбое hipModuleLaunchKernel("welford_float").
+   *   @test_check throws on hipModuleLaunchKernel != hipSuccess
    */
   void Execute(size_t beam_count, size_t n_point) {
     unsigned int bc = static_cast<unsigned int>(beam_count);

@@ -199,6 +199,7 @@ struct SnrEstimationConfig {
   /**
    * @brief Validate config invariants.
    * @throws std::invalid_argument при нарушении (ref window >= nFFT, etc.)
+   *   @test_check throws on (2*(guard_bins+ref_bins)+1 >= nFFT) || (low_to_mid_db >= mid_to_high_db) || (hysteresis_db < 0)
    */
   void Validate() const {
     uint32_t nfft_effective = (target_n_fft > 0) ? target_n_fft : snr_defaults::kTargetNFft;

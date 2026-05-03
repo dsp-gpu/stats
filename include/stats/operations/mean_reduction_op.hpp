@@ -66,15 +66,25 @@ namespace statistics {
  */
 class MeanReductionOp : public drv_gpu_lib::GpuKernelOp {
 public:
+  /**
+   * @brief Возвращает имя Op'а для логирования и профилирования.
+   *
+   * @return C-строка "MeanReduction" (статический литерал).
+   *   @test_check std::string(result) == "MeanReduction"
+   */
   const char* Name() const override { return "MeanReduction"; }
 
   /**
    * @brief Выполнить иерархическую complex mean reduce по всем beam'ам.
    * @param beam_count Число beam'ов.
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
    * @param n_point    Сэмплов на beam.
+   *   @test { range=[100..1300000], value=6000 }
    *
    * Читает ctx_->GetShared(kInput), пишет ctx_->GetShared(kResult).
    * Результат: beam_count × float2 (re, im) в kResult.
+   * @throws std::runtime_error при сбое hipModuleLaunchKernel (Phase 1 или Phase 2).
+   *   @test_check throws on hipModuleLaunchKernel != hipSuccess
    */
   void Execute(size_t beam_count, size_t n_point) {
     unsigned int bc = static_cast<unsigned int>(beam_count);
