@@ -433,7 +433,7 @@ inline void register_statistics(py::module& m) {
       "  proc = gpuworklib.StatisticsProcessor(ctx)\n"
       "  results = proc.compute_statistics(data, beam_count=4)\n"
       "  print(results[0]['mean_real'], results[0]['std_dev'])\n")
-      .def(py::init<ROCmGPUContext&>(), py::arg("ctx"),
+      .def(py::init<ROCmGPUContext&>(), py::keep_alive<1, 2>(), py::arg("ctx"),
            "Create StatisticsProcessor bound to ROCm GPU context")
 
       .def("compute_mean", &PyStatisticsProcessor::compute_mean,
