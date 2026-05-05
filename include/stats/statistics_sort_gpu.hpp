@@ -52,7 +52,7 @@ namespace gpu_sort {
  * @param d_begin_offsets   Device ptr: начальные смещения per-segment [beam_count].
  * @param d_end_offsets     Device ptr: конечные смещения per-segment   [beam_count].
  * @param total_elements    beam_count × n_point.
- *   @test { range=[100..1300000], value=6000 }
+ *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
  * @param num_segments      beam_count.
  * @param stream            HIP stream.
  * @return hipSuccess или hipError_t из rocprim::segmented_radix_sort_keys (Query-call с nullptr storage).
@@ -73,14 +73,14 @@ hipError_t QuerySortTempSize(
  * Все beam'ы (типично 256) — за ОДИН GPU-вызов rocPRIM.
  *
  * @param temp_storage      Pre-allocated temp buffer (получен через QuerySortTempSize).
- *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+ *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
  * @param temp_size         Размер temp_storage (байт).
  * @param keys_in           Device ptr: исходные float-магнитуды [total_elements].
  * @param keys_out          Device ptr: отсортированный вывод    [total_elements].
  * @param d_begin_offsets   Device ptr: начальные смещения [num_segments].
  * @param d_end_offsets     Device ptr: конечные смещения   [num_segments].
  * @param total_elements    beam_count × n_point.
- *   @test { range=[100..1300000], value=6000 }
+ *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
  * @param num_segments      beam_count.
  * @param stream            HIP stream.
  * @return hipSuccess или hipError_t из rocprim::segmented_radix_sort_keys.

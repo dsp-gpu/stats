@@ -112,11 +112,11 @@ public:
    * @brief Выполнить полный SNR pipeline: gather → FFT|X|² → CFAR → median.
    *
    * @param gpu_input    Complex<float>* [n_antennas × n_samples] на GPU.
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param n_antennas   Число входных антенн.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_samples    Сэмплов на антенну.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    * @param config       Validated SnrEstimationConfig (поля 0 → auto-defaults).
    *   @test_ref SnrEstimationConfig
    * @param out_result   Result struct (заполняется этим методом, БЕЗ BranchType).

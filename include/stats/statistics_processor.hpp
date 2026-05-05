@@ -127,7 +127,7 @@ public:
    * @brief Complex mean per beam из CPU-данных. H2D → MeanReductionOp → D2H.
    *
    * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -142,7 +142,7 @@ public:
    * @brief Median(|z|) per beam из CPU-данных. Стратегия выбирается по n_point (kHistogramThreshold=100K).
    *
    * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -157,7 +157,7 @@ public:
    * @brief Welford mean+variance+std per beam из CPU-данных (single-pass через WelfordFusedOp).
    *
    * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -176,7 +176,7 @@ public:
    * @brief Complex mean per beam из GPU-данных (D2D → MeanReductionOp → D2H), без H2D upload.
    *
    * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -191,7 +191,7 @@ public:
    * @brief Median(|z|) per beam из GPU-данных (без H2D). Стратегия выбирается по n_point.
    *
    * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -206,7 +206,7 @@ public:
    * @brief Welford mean+variance+std per beam из GPU-данных (без H2D), single-pass complex.
    *
    * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -227,11 +227,11 @@ public:
    * @brief Welford + Median за один H2D upload из CPU-данных. Возвращает FullStatisticsResult.
    *
    * @param data CPU complex<float> [beam_count × n_point] interleaved beams.
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    * @param prof_events Сборщик ROCm-событий профилирования (опционально).
-   *   @test { values=[nullptr] }
+   *   @test { values=[nullptr], error_values=[0xDEADBEEF, null] }
    *
    * @return Массив [beam_count] FullStatisticsResult: mean + var + std + median(|z|).
    *   @test_check result.size() == params.beam_count
@@ -246,11 +246,11 @@ public:
    * @brief Welford + Median за один D2D из GPU-данных (production-путь, без H2D).
    *
    * @param gpu_data GPU complex<float>* [beam_count × n_point] interleaved beams.
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    * @param prof_events Сборщик ROCm-событий профилирования (опционально).
-   *   @test { values=[nullptr] }
+   *   @test { values=[nullptr], error_values=[0xDEADBEEF, null] }
    *
    * @return Массив [beam_count] FullStatisticsResult: mean + var + std + median(|z|).
    *   @test_check result.size() == params.beam_count
@@ -266,11 +266,11 @@ public:
    * @brief WelfordFloat + Median по уже-вычисленным GPU float-магнитудам. mean всегда {0,0}.
    *
    * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    * @param prof_events Сборщик ROCm-событий профилирования (опционально).
-   *   @test { values=[nullptr] }
+   *   @test { values=[nullptr], error_values=[0xDEADBEEF, null] }
    *
    * @return Массив [beam_count] FullStatisticsResult с mean={0,0}, остальное заполнено.
    *   @test_check result.size() == params.beam_count && result[0].mean == complex(0,0)
@@ -285,7 +285,7 @@ public:
    * @brief Convenience-обёртка: H2D upload float-магнитуд → GPU-overload ComputeAllFloat.
    *
    * @param data CPU float [beam_count × n_point] (магнитуды |z|).
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -304,7 +304,7 @@ public:
    * @brief Welford по уже-вычисленным GPU float-магнитудам. mean всегда {0,0}.
    *
    * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -319,7 +319,7 @@ public:
    * @brief Median по уже-вычисленным GPU float-магнитудам (без compute_magnitudes стадии).
    *
    * @param gpu_float_data GPU float* [beam_count × n_point] (магнитуды |z|, готовы).
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -338,7 +338,7 @@ public:
    * @brief Welford по CPU float-магнитудам (convenience: H2D upload → GPU-overload).
    *
    * @param data CPU float [beam_count × n_point] (магнитуды |z|).
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -353,7 +353,7 @@ public:
    * @brief Median по CPU float-магнитудам (convenience: H2D upload → GPU-overload).
    *
    * @param data CPU float [beam_count × n_point] (магнитуды |z|).
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param params Параметры обработки (beam_count, n_point, memory_limit).
    *   @test_ref StatisticsParams
    *
@@ -374,11 +374,11 @@ public:
    * Pipeline: upload → gather → FFT(Hann)|X|² → CFAR → median.
    *
    * @param data        CPU complex<float> [n_antennas × n_samples] (row-major).
-   *   @test { size=[100..1300000], value=6000, unit="elements" }
+   *   @test { size=[100..1300000], value=6000, unit="elements", error_values=[-1, 3000000, 3.14] }
    * @param n_antennas  Число антенн.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_samples   Сэмплов на антенну.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    * @param config      Конфиг SNR-estimator (см. snr_defaults::).
    *   @test_ref SnrEstimationConfig
    * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
@@ -398,11 +398,11 @@ public:
    * Pipeline: gather → FFT(Hann)|X|² → CFAR → median (данные уже на GPU).
    *
    * @param gpu_data    GPU complex<float>* [n_antennas × n_samples].
-   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr] }
+   *   @test { pattern=gpu_pointer, values=["valid_alloc", nullptr], error_values=[0xDEADBEEF, null] }
    * @param n_antennas  Число антенн.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_samples   Сэмплов на антенну.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    * @param config      Конфиг SNR-estimator.
    *   @test_ref SnrEstimationConfig
    * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.

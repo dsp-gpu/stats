@@ -88,9 +88,9 @@ public:
   /**
    * @brief Выполнить radix-sort медиану (complex input — full pipeline).
    * @param beam_count Число beam'ов.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_point    Сэмплов на beam.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    *
    * Pipeline: magnitudes → sort → extract_medians.
    * Читает kInput, пишет kMediansCompact (float[beam_count]).
@@ -107,9 +107,9 @@ public:
   /**
    * @brief Выполнить radix-sort медиану по уже-вычисленным float magnitudes.
    * @param beam_count Число beam'ов.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_point    Сэмплов на beam.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    *
    * Без compute_magnitudes. Читает kMagnitudes, пишет kMediansCompact.
    */

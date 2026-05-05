@@ -72,9 +72,9 @@ public:
   /**
    * @brief Выполнить single-pass Welford по complex-входу.
    * @param beam_count Число beam'ов.
-   *   @test { range=[1..50000], value=128, unit="лучей/каналов" }
+   *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_point    Сэмплов на beam.
-   *   @test { range=[100..1300000], value=6000 }
+   *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
    *
    * Читает kInput (complex<float>), пишет kResult (5 floats per beam:
    * mean_re, mean_im, mean_mag, variance, std_dev).
