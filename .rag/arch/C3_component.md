@@ -18,26 +18,19 @@ description: "C3 Component — key classes и интерфейсы репо stat
 
 - **Namespace:** `statistics`
 - **Методы:** 32, **test_params rows:** 36
-- **Brief:** ///
+- **Brief:** *(описание не задано)*
 
 ### `statistics::SnrEstimatorOp`
 
 - **Namespace:** `statistics`
 - **Методы:** 8, **test_params rows:** 6
-- **Brief:** /**
-SnrEstimatorOp — Layer 5 Op for full SNR CFAR pipeline.
-* Lifecycle:
-1. op.SetupFft(backend)       — создать FFTProcessorROCm (один раз)
-2. op.Initialize(ctx)
+- **Brief:** — Layer 5 Op for full SNR CFAR pipeline. Lifecycle: 1. op.SetupFft(backend) — создать FFTProcessorROCm (один раз) 2. op.Initialize(ctx)
 
 ### `statistics::BranchSelector`
 
 - **Namespace:** `statistics`
 - **Методы:** 4, **test_params rows:** 5
-- **Brief:** /**
-Stateful branch selector with hysteresis.
-* Применяется после `StatisticsProcessor::ComputeSnrDb()`. Хранит текущую
-ветку между вызовами. Переход происходит только когда SNR п
+- **Brief:** branch selector with hysteresis. Применяется после `StatisticsProcessor::ComputeSnrDb()`. Хранит текущую ветку между вызовами. Переход происходит только когда SNR п
 
 ### `statistics::MedianRadixSortOp`
 
@@ -79,9 +72,5 @@ Stateful branch selector with hysteresis.
 
 - **Namespace:** `statistics`
 - **Методы:** 1, **test_params rows:** 1
-- **Brief:** /**
-Config для SNR-estimator.
-* Все поля с `= 0` обозначают auto-режим:
-- target_n_fft = 0  → snr_defaults::kTargetNFft (2048)
-- step_samples = 0  → ceil(n_samples / targe
+- **Brief:** для SNR-estimator. Все поля с `= 0` обозначают auto-режим: - target_n_fft = 0 → snr_defaults::kTargetNFft (2048) - step_samples = 0 → ceil(n_samples / targe
 

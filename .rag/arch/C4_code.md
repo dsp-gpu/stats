@@ -16,7 +16,7 @@ description: "C4 Code — реальные классы с паттернами 
 
 | Класс | Паттерн | Brief |
 |-------|---------|-------|
-| `StatisticsProcessor` | **Pipeline** | /// |
+| `StatisticsProcessor` | **Pipeline** |  |
 
 ## HIP-ядра (`kernels/rocm/`)
 
