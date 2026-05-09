@@ -115,7 +115,14 @@ used_by: []                              # TODO: AI-fill из других _RAG.
 python_modules:                          # TODO: auto from pybind_bindings
   - TODO
 
-tags: []                                 # TODO: AI-fill
+tags:                                    # auto-inferred (RAG_CLAUDE_C4)
+  - "#layer:compute"
+  - "#repo:stats"
+  - "#namespace:statistics"
+  - "#namespace:test_snr_estimator"
+  - "#namespace:test_statistics_compute_all_benchmark"
+  - "#pattern:Pipeline:StatisticsProcessor"
+  - "#pattern:Pipeline:PyStatisticsProcessor"
 
 notes: []                                # TODO: AI-fill из ai_summary
 
