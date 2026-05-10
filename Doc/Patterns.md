@@ -21,8 +21,14 @@
 
 - **`statistics::StatisticsProcessor`** — `stats/include/stats/statistics_processor.hpp:61`
   - Facade репо `stats`: mean / std / variance (Welford online), median (histogram / radix-sort), SNR-estimator. Pipeline на rocPRIM. Стабильный публичный API → Python-биндинги не ломаются.
+
+## Adapter
+
+> Тонкая pybind-обёртка над C++ Facade: адаптирует API под Python (numpy↔GPU, GIL release).
+
+
 - **`PyStatisticsProcessor`** — `stats/python/py_statistics.hpp:31`
-  - Вычисляет статистику по нескольким «лучам» (beam) параллельно на GPU. Данные организованы как flat array: [beam0_sample0, beam0_sample1, ..., beam1_sample0, ...] — то есть beam_count * n_point элементов, beam-major layout. Три метода: compu
+  - Pybind-Adapter над `statistics::StatisticsProcessor`: numpy↔GPU, GIL-release в `Compute*`. Beam-major flat layout `[beam_count × n_point]`, exposes mean/std/variance/median/SNR.
 
 ## Operation
 

@@ -126,7 +126,6 @@ tags:                                    # auto-inferred (RAG_CLAUDE_C4)
   - "#namespace:test_snr_estimator"
   - "#namespace:test_statistics_compute_all_benchmark"
   - "#pattern:Pipeline:StatisticsProcessor"
-  - "#pattern:Pipeline:PyStatisticsProcessor"
   - "#pattern:Facade:StatisticsProcessor"
   - "#pattern:Operation:MeanReductionOp"
   - "#pattern:Operation:MedianHistogramOp"
@@ -135,6 +134,7 @@ tags:                                    # auto-inferred (RAG_CLAUDE_C4)
   - "#pattern:Operation:SnrEstimatorOp"
   - "#pattern:Operation:WelfordFloatOp"
   - "#pattern:Operation:WelfordFusedOp"
+  - "#pattern:Adapter:PyStatisticsProcessor"
 
 notes: []                                # TODO: AI-fill из ai_summary
 

@@ -52,7 +52,8 @@ stats/
 ## 🏷️ RAG теги
 
 
-`#layer:compute` `#repo:stats` `#namespace:statistics` `#namespace:test_snr_estimator` `#namespace:test_statistics_compute_all_benchmark` `#pattern:Pipeline:StatisticsProcessor` `#pattern:Pipeline:PyStatisticsProcessor` `#pattern:Facade:StatisticsProcessor` `#pattern:Operation:MeanReductionOp` `#pattern:Operation:MedianHistogramOp` `#pattern:Operation:MedianHistogramComplexOp` `#pattern:Operation:MedianRadixSortOp` `#pattern:Operation:SnrEstimatorOp` `#pattern:Operation:WelfordFloatOp` `#pattern:Operation:WelfordFusedOp`
+
+`#layer:compute` `#repo:stats` `#namespace:statistics` `#namespace:test_snr_estimator` `#namespace:test_statistics_compute_all_benchmark` `#pattern:Pipeline:StatisticsProcessor` `#pattern:Facade:StatisticsProcessor` `#pattern:Operation:MeanReductionOp` `#pattern:Operation:MedianHistogramOp` `#pattern:Operation:MedianHistogramComplexOp` `#pattern:Operation:MedianRadixSortOp` `#pattern:Operation:SnrEstimatorOp` `#pattern:Operation:WelfordFloatOp` `#pattern:Operation:WelfordFusedOp` `#pattern:Adapter:PyStatisticsProcessor`
 
 ## 🔗 Правила (path-scoped автоматически)
 
