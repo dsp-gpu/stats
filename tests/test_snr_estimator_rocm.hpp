@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // test_snr_estimator_rocm — тесты SNREstimator (SNR_08, 7 сценариев)
@@ -23,8 +23,8 @@
 #if ENABLE_ROCM
 
 #include "snr_test_helpers.hpp"
-#include <stats/statistics_processor.hpp>
-#include <stats/branch_selector.hpp>
+#include <dsp/stats/statistics_processor.hpp>
+#include <dsp/stats/branch_selector.hpp>
 
 #include <core/services/console_output.hpp>
 
@@ -49,12 +49,12 @@ inline void TestPrint(const std::string& msg) {
 inline void test_01_noise_only_artifact() {
   TestPrint("[test_01] Noise only — CFAR artifact");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 1, n_samp = 5000;
   auto data = snr_test_helpers::MakeNoise(n_samp, /*noise_power=*/1.0f, /*seed=*/42u);
 
-  statistics::SnrEstimationConfig cfg;  // defaults: target_n_fft=0→2048, Hann, guard=5, ref=16
+  dsp::stats::SnrEstimationConfig cfg;  // defaults: target_n_fft=0→2048, Hann, guard=5, ref=16
 
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
@@ -64,9 +64,9 @@ inline void test_01_noise_only_artifact() {
   assert(result.used_bins >= 1024u && result.used_bins <= 4096u);
 
   // BranchSelector с откалиброванными порогами: шум должен быть Low.
-  statistics::BranchSelector selector;
+  dsp::stats::BranchSelector selector;
   auto branch = selector.Select(result.snr_db_global, cfg.thresholds);
-  assert(branch == statistics::BranchType::Low);
+  assert(branch == dsp::stats::BranchType::Low);
 
   TestPrint("[test_01] PASS — snr_db=" + std::to_string(result.snr_db_global));
 }
@@ -77,7 +77,7 @@ inline void test_01_noise_only_artifact() {
 inline void test_02_basic_signal() {
   TestPrint("[test_02] CW + noise, SNR_in=20 dB");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 1, n_samp = 5000;
   // SNR_in = 20 dB → A² / σ² = 100 → A = 10 при σ² = 1
@@ -85,7 +85,7 @@ inline void test_02_basic_signal() {
   auto signal = snr_test_helpers::MakeDechirpedCW(n_samp, /*freq_norm=*/0.15f, A);
   snr_test_helpers::AddNoise(signal, noise_power, /*seed=*/42u);
 
-  statistics::SnrEstimationConfig cfg;
+  dsp::stats::SnrEstimationConfig cfg;
   auto result = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg);
 
   // SNR_fft = SNR_in + 10·log10(N_actual) ≈ 20 + 32 = 52 dB.
@@ -101,7 +101,7 @@ inline void test_02_basic_signal() {
 inline void test_03_negative_freq() {
   TestPrint("[test_03] Negative freq + search_full_spectrum toggle");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 1, n_samp = 5000;
   // Отрицательная частота: −0.2 → f * n_samples даёт пик в [nFFT/2..nFFT)
@@ -109,13 +109,13 @@ inline void test_03_negative_freq() {
   snr_test_helpers::AddNoise(signal, /*noise_power=*/1.0f, /*seed=*/42u);
 
   // Full spectrum: peak находится в отрицательной части — SNR должен быть высокий.
-  statistics::SnrEstimationConfig cfg_full;
+  dsp::stats::SnrEstimationConfig cfg_full;
   cfg_full.search_full_spectrum = true;
   auto r_full = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg_full);
   assert(r_full.snr_db_global > 30.0f);
 
   // Только [0..nFFT/2): пик в отрицательной части пропускается — CFAR видит только шум.
-  statistics::SnrEstimationConfig cfg_half;
+  dsp::stats::SnrEstimationConfig cfg_half;
   cfg_half.search_full_spectrum = false;
   auto r_half = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg_half);
   assert(r_half.snr_db_global < 18.0f);
@@ -130,7 +130,7 @@ inline void test_03_negative_freq() {
 inline void test_04_scenario_a() {
   TestPrint("[test_04] Scenario A: 2500 ant x 5000 samp");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 2500, n_samp = 5000;
   // Генерируем сигнал со случайными частотами в диапазоне 0.05..0.3
@@ -148,7 +148,7 @@ inline void test_04_scenario_a() {
     std::copy(sig.begin(), sig.end(), data.begin() + static_cast<size_t>(ant) * n_samp);
   }
 
-  statistics::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(2500/50) = 50
+  dsp::stats::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(2500/50) = 50
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
   // n_ant_out = ceil(2500 / 50) = 50
@@ -166,7 +166,7 @@ inline void test_04_scenario_a() {
 inline void test_05_scenario_b() {
   TestPrint("[test_05] Scenario B: 256 ant x 1.3M samp (2.66 GB)");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 256, n_samp = 1'300'000u;
 
@@ -191,7 +191,7 @@ inline void test_05_scenario_b() {
     hipMemcpy(dst, one_ant.data(), n_samp * sizeof(cx), hipMemcpyHostToDevice);
   }
 
-  statistics::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(256/50) = 6
+  dsp::stats::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(256/50) = 6
   auto result = proc.ComputeSnrDb(gpu_data, n_ant, n_samp, cfg);
 
   snr_test_helpers::FreeGpu(gpu_data);
@@ -212,7 +212,7 @@ inline void test_05_scenario_b() {
 inline void test_06_scenario_b_noise() {
   TestPrint("[test_06] Scenario B noise only — CFAR artifact stable");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 256, n_samp = 1'300'000u;
 
@@ -232,7 +232,7 @@ inline void test_06_scenario_b_noise() {
     hipMemcpy(dst, one_ant.data(), n_samp * sizeof(cx), hipMemcpyHostToDevice);
   }
 
-  statistics::SnrEstimationConfig cfg;
+  dsp::stats::SnrEstimationConfig cfg;
   auto result = proc.ComputeSnrDb(gpu_data, n_ant, n_samp, cfg);
   snr_test_helpers::FreeGpu(gpu_data);
 
@@ -248,7 +248,7 @@ inline void test_06_scenario_b_noise() {
 inline void test_06b_scenario_c() {
   TestPrint("[test_06b] Scenario C: 9000 ant x 10000 samp");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 9000, n_samp = 10000;
 
@@ -267,7 +267,7 @@ inline void test_06b_scenario_c() {
     std::copy(sig.begin(), sig.end(), data.begin() + static_cast<size_t>(ant) * n_samp);
   }
 
-  statistics::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(9000/50) = 180
+  dsp::stats::SnrEstimationConfig cfg;  // auto: step_antennas → ceil(9000/50) = 180
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
   // n_ant_out = ceil(9000 / 180) = 50

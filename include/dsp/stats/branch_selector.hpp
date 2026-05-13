@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // BranchSelector — stateful hysteresis-классификатор SNR (Low / Mid / High)
@@ -29,7 +29,7 @@
 //           ветку вверх через все пороги за один вызов.
 //
 // Использование:
-//   statistics::BranchSelector sel;
+//   dsp::stats::BranchSelector sel;
 //   while (running) {
 //     auto r = proc.ComputeSnrDb(iq, n_ant, n_samp, cfg);
 //     auto branch = sel.Select(r.snr_db_global, cfg.thresholds);
@@ -45,11 +45,11 @@
 //   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
 // ============================================================================
 
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 
 #include <cmath>  // std::isfinite
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class BranchSelector
@@ -58,8 +58,8 @@ namespace statistics {
  * @note NOT thread-safe — один экземпляр на поток/pipeline.
  * @note Header-only (inline методы); состояние = одна enum-переменная.
  * @note NaN/Inf оставляют ветку прежней (плохой фрейм не ломает каскад).
- * @see statistics::SnrEstimationResult — источник snr_db_global.
- * @see statistics::BranchThresholds — пороги (калибровано Python Эксп.5).
+ * @see dsp::stats::SnrEstimationResult — источник snr_db_global.
+ * @see dsp::stats::BranchThresholds — пороги (калибровано Python Эксп.5).
  *
  * Переходы (с защитой через hysteresis h):
  *   Low  → Mid:  snr > low_to_mid + h
@@ -127,4 +127,4 @@ private:
   BranchType current_ = BranchType::Low;
 };
 
-}  // namespace statistics
+} // namespace dsp::stats

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // MedianRadixSortOp — медиана |z| через rocPRIM segmented radix sort
@@ -8,7 +8,7 @@
 //         всех элементов. Two execution paths:
 //           - Execute(beam, n_point)      — complex input: magnitudes + sort + extract
 //           - ExecuteFloat(beam, n_point) — float magnitudes готовы: только sort + extract
-//         Pipeline: compute_magnitudes → gpu_sort::ExecuteSort (rocPRIM) →
+//         Pipeline: compute_magnitudes → dsp::stats::gpu_sort::ExecuteSort (rocPRIM) →
 //         extract_medians (берёт средний элемент каждого сегмента).
 //
 // ЗАЧЕМ:  Универсальная стратегия median, работает для любых n_point.
@@ -37,7 +37,7 @@
 //           variable-length сегментов.
 //
 // Использование:
-//   statistics::MedianRadixSortOp ms;
+//   dsp::stats::MedianRadixSortOp ms;
 //   ms.Initialize(ctx);
 //   // Complex путь:
 //   ms.Execute(beam_count, n_point);
@@ -54,26 +54,26 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
 #include <core/interface/gpu_context.hpp>
-#include <stats/statistics_types.hpp>
-#include <stats/statistics_sort_gpu.hpp>
+#include <dsp/stats/statistics_types.hpp>
+#include <dsp/stats/statistics_sort_gpu.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class MedianRadixSortOp
  * @brief Layer 5 Ref03 Op: медиана |z| через rocPRIM segmented radix sort (универсальный путь).
  *
  * @note Lazy + cached buffer allocation (BufferSet<3>: sort_buf, sort_temp, offsets).
- * @note Требует #if ENABLE_ROCM. Зависит от rocPRIM (через gpu_sort::ExecuteSort).
+ * @note Требует #if ENABLE_ROCM. Зависит от rocPRIM (через dsp::stats::gpu_sort::ExecuteSort).
  * @note Эффективен для n_point ≤ kHistogramThreshold (≈100K). Для больших — Histogram-варианты.
  * @note Two paths: Execute (complex input) + ExecuteFloat (магнитуды готовы).
- * @see statistics::gpu_sort::ExecuteSort — rocPRIM-обёртка (компилируется hipcc).
- * @see statistics::MedianHistogramOp / MedianHistogramComplexOp — альтернатива для больших n.
+ * @see dsp::stats::gpu_sort::ExecuteSort — rocPRIM-обёртка (компилируется hipcc).
+ * @see dsp::stats::MedianHistogramOp / MedianHistogramComplexOp — альтернатива для больших n.
  */
 class MedianRadixSortOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -169,7 +169,7 @@ private:
     // Query sort temp size + allocate
     {
       auto* d_offsets = static_cast<const unsigned int*>(bufs_.Get(kOffsets));
-      hipError_t err = gpu_sort::QuerySortTempSize(
+      hipError_t err = dsp::stats::gpu_sort::QuerySortTempSize(
           sort_temp_size_, d_offsets, d_offsets + 1,
           static_cast<unsigned int>(total),
           static_cast<unsigned int>(beam_count),
@@ -218,7 +218,7 @@ private:
         ctx_->GetShared(shared_buf::kMagnitudes));
     auto* sort_buf  = static_cast<float*>(bufs_.Get(kSortBuf));
 
-    hipError_t err = gpu_sort::ExecuteSort(
+    hipError_t err = dsp::stats::gpu_sort::ExecuteSort(
         bufs_.Get(kSortTemp), sort_temp_size_,
         mag_buf, sort_buf,
         d_offsets, d_offsets + 1,
@@ -252,6 +252,6 @@ private:
   }
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

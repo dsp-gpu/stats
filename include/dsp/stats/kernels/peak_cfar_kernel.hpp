@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /**
  * @file peak_cfar_kernel.hpp
@@ -26,7 +26,7 @@
 
 #if ENABLE_ROCM
 
-namespace statistics {
+namespace dsp::stats {
 namespace kernels {
 
 /**
@@ -128,6 +128,6 @@ extern "C" __global__ void peak_cfar(
 }
 
 }  // namespace kernels
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /**
  * @file gather_decimated_kernel.hpp
@@ -24,7 +24,7 @@
 
 #if ENABLE_ROCM
 
-namespace statistics {
+namespace dsp::stats {
 namespace kernels {
 
 /**
@@ -79,6 +79,6 @@ extern "C" __global__ void gather_decimated(
 }
 
 }  // namespace kernels
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // WelfordFloatOp — Welford-статистика по уже-вычисленным float magnitudes
@@ -25,7 +25,7 @@
 //         - BufferSet<0> — Op stateless, all temp memory в LDS.
 //
 // Использование:
-//   statistics::WelfordFloatOp wf;
+//   dsp::stats::WelfordFloatOp wf;
 //   wf.Initialize(ctx);
 //   // kMagnitudes уже заполнен (магнитуды compute или Python upload)
 //   wf.Execute(beam_count, n_point);
@@ -41,13 +41,13 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
 #include <core/interface/gpu_context.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
 #include <string>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class WelfordFloatOp
@@ -56,7 +56,7 @@ namespace statistics {
  * @note Stateless (BufferSet<0>, all temp в LDS).
  * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_float`.
  * @note mean_re/mean_im в выходе ВСЕГДА 0 (вход не комплексный).
- * @see statistics::WelfordFusedOp — аналог по complex-входу (single-pass).
+ * @see dsp::stats::WelfordFusedOp — аналог по complex-входу (single-pass).
  */
 class WelfordFloatOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -112,6 +112,6 @@ private:
   drv_gpu_lib::BufferSet<0> bufs_;
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

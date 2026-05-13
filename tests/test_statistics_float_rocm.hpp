@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // test_statistics_float_rocm — тесты StatisticsProcessor float API (ROCm)
@@ -23,7 +23,7 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_processor.hpp>
 #include <spectrum/complex_to_mag_phase_rocm.hpp>
 #include "test_helpers_rocm.hpp"
 #include <core/backends/rocm/rocm_backend.hpp>
@@ -47,7 +47,7 @@
 
 namespace test_statistics_float_rocm {
 
-using namespace statistics;
+using namespace dsp::stats;
 using namespace drv_gpu_lib;
 using namespace test_helpers_rocm;
 using namespace gpu_test_utils;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /**
  * @file statistics_types.hpp
@@ -11,7 +11,7 @@
  *         - StatisticsParams / MeanResult / StatisticsResult / MedianResult /
  *           FullStatisticsResult — input/output для StatisticsProcessor
  *         - SNR-estimator (SNR_01, 2026-04-09): BranchType / BranchThresholds /
- *           SnrEstimationConfig / SnrEstimationResult / snr_defaults::
+ *           SnrEstimationConfig / SnrEstimationResult / dsp::stats::snr_defaults::
  * @note Калибровка SNR-параметров — Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR).
  *       Source: PyPanelAntennas/SNR/results/exp5_thresholds.json.
  *
@@ -28,7 +28,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace statistics {
+namespace dsp::stats {
 
 // =========================================================================
 // Shared GPU buffer slot assignments for StatisticsProcessor
@@ -138,7 +138,7 @@ struct FullStatisticsResult {
  *   - kRefBins:    8 → 16  (для Hann более плавная оценка шума)
  *   - kDefaultWindow: None → Hann (решает sinc sidelobes −27 dB bias)
  */
-namespace snr_defaults {
+namespace dsp::stats::snr_defaults {
   static constexpr uint32_t kTargetNFft           = 2048;  ///< default N_fft (гибкий, не догма)
   static constexpr uint32_t kGuardBins            = 5;     ///< калибровано для Hann
   static constexpr uint32_t kRefBins              = 16;    ///< калибровано для Hann
@@ -149,7 +149,7 @@ namespace snr_defaults {
   /// rect даёт −27 dB bias! Python Эксп.0 показал Hann — оптимальный компромисс.
   static constexpr fft_processor::WindowType kDefaultWindow =
       fft_processor::WindowType::Hann;
-}  // namespace snr_defaults
+} // namespace dsp::stats::snr_defaults
 
 /// Branch category для переключения обработки Low/Mid/High SNR
 enum class BranchType {
@@ -168,30 +168,30 @@ enum class BranchType {
 struct BranchThresholds {
   float low_to_mid_db  = 15.0f;  ///< калибровано Python Эксп.5 (было 6.0 pre-calibration)
   float mid_to_high_db = 30.0f;  ///< калибровано Python Эксп.5 (было 12.0 pre-calibration)
-  float hysteresis_db  = snr_defaults::kHysteresisDb;
+  float hysteresis_db  = dsp::stats::snr_defaults::kHysteresisDb;
 };
 
 /**
  * @brief Config для SNR-estimator.
  *
  * Все поля с `= 0` обозначают auto-режим:
- *   - target_n_fft = 0  → snr_defaults::kTargetNFft (2048)
+ *   - target_n_fft = 0  → dsp::stats::snr_defaults::kTargetNFft (2048)
  *   - step_samples = 0  → ceil(n_samples / target_n_fft)
  *   - step_antennas = 0 → ceil(n_antennas / kTargetAntennasMedian)
  *
  * @note Result НЕ содержит BranchType — для классификации использовать BranchSelector.
  */
 struct SnrEstimationConfig {
-  uint32_t target_n_fft  = 0;   ///< 0 → auto (snr_defaults::kTargetNFft = 2048)
+  uint32_t target_n_fft  = 0;   ///< 0 → auto (dsp::stats::snr_defaults::kTargetNFft = 2048)
   uint32_t step_samples  = 0;   ///< 0 → auto из target_n_fft
   uint32_t step_antennas = 0;   ///< 0 → auto (ceil(n_antennas / kTargetAntennasMedian))
-  uint32_t guard_bins = snr_defaults::kGuardBins;  ///< default 5 (калибровано)
-  uint32_t ref_bins   = snr_defaults::kRefBins;    ///< default 16 (калибровано)
+  uint32_t guard_bins = dsp::stats::snr_defaults::kGuardBins;  ///< default 5 (калибровано)
+  uint32_t ref_bins   = dsp::stats::snr_defaults::kRefBins;    ///< default 16 (калибровано)
   bool     search_full_spectrum = true;            ///< false → search in [0..nFFT/2]
 
   /// Window function для FFT pre-processing.
   /// Hann (default) решает проблему sinc sidelobes.
-  fft_processor::WindowType window = snr_defaults::kDefaultWindow;
+  fft_processor::WindowType window = dsp::stats::snr_defaults::kDefaultWindow;
 
   bool     with_dechirp = false;     ///< reserved: встроить дечирп в pipeline
   BranchThresholds thresholds;       ///< калиброванные пороги
@@ -202,7 +202,7 @@ struct SnrEstimationConfig {
    *   @test_check throws on (2*(guard_bins+ref_bins)+1 >= nFFT) || (low_to_mid_db >= mid_to_high_db) || (hysteresis_db < 0)
    */
   void Validate() const {
-    uint32_t nfft_effective = (target_n_fft > 0) ? target_n_fft : snr_defaults::kTargetNFft;
+    uint32_t nfft_effective = (target_n_fft > 0) ? target_n_fft : dsp::stats::snr_defaults::kTargetNFft;
     // ref window должен помещаться в nFFT с запасом на peak
     if (2u * (guard_bins + ref_bins) + 1u >= nfft_effective) {
       throw std::invalid_argument(
@@ -238,4 +238,4 @@ struct SnrEstimationResult {
   uint32_t n_actual           = 0;          ///< число сэмплов после децимации (до padding)
 };
 
-}  // namespace statistics
+} // namespace dsp::stats

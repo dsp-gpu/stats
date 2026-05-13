@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // MedianHistogramOp — точная медиана 4-проходным byte-histogram (float input)
@@ -34,7 +34,7 @@
 //           (по beam_count×u32). Lazy alloc через AllocatePrivateBuffers.
 //
 // Использование:
-//   statistics::MedianHistogramOp mh;
+//   dsp::stats::MedianHistogramOp mh;
 //   mh.Initialize(ctx);
 //   // kMagnitudes уже заполнен (compute_magnitudes или float Python upload)
 //   mh.Execute(beam_count, n_point);
@@ -50,7 +50,7 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
 #include <core/interface/gpu_context.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
@@ -59,7 +59,7 @@
 #include <cstring>
 #include <algorithm>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class MedianHistogramOp
@@ -68,8 +68,8 @@ namespace statistics {
  * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
  * @note Требует #if ENABLE_ROCM. Зависит от kernels histogram_median_pass + find_median_bucket.
  * @note Эффективен для n_point > kHistogramThreshold (≈100K). Для меньших — MedianRadixSortOp.
- * @see statistics::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
- * @see statistics::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).
+ * @see dsp::stats::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
+ * @see dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).
  */
 class MedianHistogramOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -197,6 +197,6 @@ private:
   }
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

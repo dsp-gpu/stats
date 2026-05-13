@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /**
  * @file statistics_kernels_rocm.hpp
@@ -27,7 +27,7 @@
 
 #if ENABLE_ROCM
 
-namespace statistics {
+namespace dsp::stats {
 namespace kernels {
 
 /**
@@ -668,6 +668,6 @@ extern "C" __global__ void find_median_bucket(
 }
 
 }  // namespace kernels
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

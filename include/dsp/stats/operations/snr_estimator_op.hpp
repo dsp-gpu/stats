@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // SnrEstimatorOp — полный SNR/CA-CFAR pipeline с авто-децимацией
@@ -29,7 +29,7 @@
 //           Lazy init через unique_ptr → освобождение в OnRelease.
 //         - Hann window default: Python Эксп.0 показал что без window есть
 //           −27 dB bias от sinc sidelobes. Калибровано config.window =
-//           snr_defaults::kDefaultWindow = Hann.
+//           dsp::stats::snr_defaults::kDefaultWindow = Hann.
 //         - squared=true в ProcessMagnitudesToGPU: power spectrum |X|², без
 //           sqrt — для CFAR ratio sqrt не нужен (отношение mean(|X|²) одинаково
 //           корректно), даёт ~7× speedup на RDNA (sqrt ≈ 25 cycles).
@@ -43,11 +43,11 @@
 //           validate, чтобы не упасть в kernel-launch с непонятным сообщением.
 //
 // Использование:
-//   statistics::SnrEstimatorOp snr_op;
+//   dsp::stats::SnrEstimatorOp snr_op;
 //   snr_op.SetupFft(rocm_backend);     // один раз, до Initialize
 //   snr_op.Initialize(stats_ctx);
-//   statistics::SnrEstimationConfig cfg;        // defaults уже калиброваны
-//   statistics::SnrEstimationResult res;
+//   dsp::stats::SnrEstimationConfig cfg;        // defaults уже калиброваны
+//   dsp::stats::SnrEstimationResult res;
 //   snr_op.Execute(gpu_iq, n_ant, n_samp, cfg, res);
 //   // res.snr_db_global — медиана SNR по подвыборке антенн
 //
@@ -61,8 +61,8 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/interface/gpu_context.hpp>
 #include <core/interface/i_backend.hpp>
-#include <stats/statistics_types.hpp>
-#include <stats/operations/median_radix_sort_op.hpp>
+#include <dsp/stats/statistics_types.hpp>
+#include <dsp/stats/operations/median_radix_sort_op.hpp>
 #include <spectrum/fft_processor_rocm.hpp>
 
 #include <hip/hip_runtime.h>
@@ -72,7 +72,7 @@
 #include <string>
 #include <cstring>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class SnrEstimatorOp
@@ -82,9 +82,9 @@ namespace statistics {
  * @note Требует #if ENABLE_ROCM. Зависит от kernels gather_decimated + peak_cfar.
  * @note Калибровано Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR mean).
  * @note Lifecycle: SetupFft(backend) → Initialize(ctx) → Execute(...) → Release.
- * @see statistics::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
+ * @see dsp::stats::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
  * @see fft_processor::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
- * @see statistics::MedianRadixSortOp — переиспользуется для медианы по антеннам.
+ * @see dsp::stats::MedianRadixSortOp — переиспользуется для медианы по антеннам.
  */
 class SnrEstimatorOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -142,7 +142,7 @@ public:
     // 1. Compute auto-parameters (0 → default from snr_defaults)
     const uint32_t target_n_fft = (config.target_n_fft > 0)
         ? config.target_n_fft
-        : snr_defaults::kTargetNFft;
+        : dsp::stats::snr_defaults::kTargetNFft;
 
     const uint32_t step_samples = (config.step_samples > 0)
         ? config.step_samples
@@ -150,7 +150,7 @@ public:
 
     const uint32_t step_antennas = (config.step_antennas > 0)
         ? config.step_antennas
-        : CeilDiv(n_antennas, snr_defaults::kTargetAntennasMedian);
+        : CeilDiv(n_antennas, dsp::stats::snr_defaults::kTargetAntennasMedian);
 
     const uint32_t n_actual  = n_samples / step_samples;
     const uint32_t n_ant_out = CeilDiv(n_antennas, step_antennas);
@@ -168,7 +168,7 @@ public:
           std::to_string(n_actual));
     }
 
-    // 2. Allocate shared buffers (slots из statistics::shared_buf)
+    // 2. Allocate shared buffers (slots из dsp::stats::shared_buf)
     const size_t gather_bytes =
         (size_t)n_ant_out * (size_t)n_actual * sizeof(float) * 2;
     ctx_->RequireShared(shared_buf::kGatherOutput, gather_bytes);
@@ -355,6 +355,6 @@ private:
   }
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

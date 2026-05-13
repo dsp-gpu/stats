@@ -1,7 +1,7 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
-// statistics::gpu_sort — обёртка над rocPRIM segmented radix sort
+// dsp::stats::gpu_sort — обёртка над rocPRIM segmented radix sort
 //
 // ЧТO:    Две функции namespace-уровня:
 //           - QuerySortTempSize  — узнать сколько байт temp storage требует sort
@@ -27,9 +27,9 @@
 //
 // Использование:
 //   size_t tmp_bytes = 0;
-//   gpu_sort::QuerySortTempSize(tmp_bytes, d_begin, d_end, total, beams, str);
+//   dsp::stats::gpu_sort::QuerySortTempSize(tmp_bytes, d_begin, d_end, total, beams, str);
 //   void* tmp = ...; // выделить tmp_bytes на device
-//   gpu_sort::ExecuteSort(tmp, tmp_bytes, mag_in, mag_out,
+//   dsp::stats::gpu_sort::ExecuteSort(tmp, tmp_bytes, mag_in, mag_out,
 //                          d_begin, d_end, total, beams, str);
 //
 // История:
@@ -42,8 +42,8 @@
 #include <hip/hip_runtime.h>
 #include <cstddef>
 
-namespace statistics {
-namespace gpu_sort {
+namespace dsp::stats {
+namespace dsp::stats::gpu_sort {
 
 /**
  * @brief Узнать размер temp storage для segmented radix sort (Query-фаза rocPRIM).
@@ -97,7 +97,7 @@ hipError_t ExecuteSort(
     unsigned int          num_segments,
     hipStream_t           stream);
 
-}  // namespace gpu_sort
-}  // namespace statistics
+} // namespace dsp::stats::gpu_sort
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

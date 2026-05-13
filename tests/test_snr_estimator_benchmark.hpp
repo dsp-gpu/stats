@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // test_snr_estimator_benchmark — runner SnrEstimatorBenchmark (4 сценария)
@@ -24,7 +24,7 @@
 
 #include "snr_estimator_benchmark.hpp"
 #include "snr_test_helpers.hpp"
-#include <stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_processor.hpp>
 
 #include <core/services/console_output.hpp>
 
@@ -67,7 +67,7 @@ inline bool FillGpuBufferWithNoisePlusCW(void* gpu_data,
 
 /// Запустить SnrEstimatorBenchmark на одной конфигурации.
 inline void RunOneScenario(drv_gpu_lib::IBackend* backend,
-                           statistics::StatisticsProcessor& proc,
+                           dsp::stats::StatisticsProcessor& proc,
                            const SnrBenchScenario& scenario)
 {
   using cx = std::complex<float>;
@@ -97,7 +97,7 @@ inline void RunOneScenario(drv_gpu_lib::IBackend* backend,
     return;
   }
 
-  statistics::SnrEstimationConfig scfg;
+  dsp::stats::SnrEstimationConfig scfg;
   scfg.target_n_fft = scenario.target_n_fft;  // 0 → auto
 
   // Запуск benchmark: warmup + measurement
@@ -124,7 +124,7 @@ inline void run_benchmark() {
   }
 
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const std::vector<SnrBenchScenario> scenarios = {
     {"Py-Small",        5u,    1'300'000u, 2048u},

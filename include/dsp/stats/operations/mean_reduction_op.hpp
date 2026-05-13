@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // MeanReductionOp — иерархический complex mean per-beam (Layer 5 Ref03)
@@ -31,7 +31,7 @@
 //           реаллокации (фасад вызывает Mean → потом Welford на kResult).
 //
 // Использование:
-//   statistics::MeanReductionOp mean_op;
+//   dsp::stats::MeanReductionOp mean_op;
 //   mean_op.Initialize(ctx);              // один раз
 //   ctx.RequireShared(shared_buf::kInput, beam_count*n_point*sizeof(float)*2);
 //   // upload в kInput
@@ -47,13 +47,13 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
 #include <core/interface/gpu_context.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
 #include <string>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class MeanReductionOp
@@ -62,7 +62,7 @@ namespace statistics {
  * @note Stateless по семантике (private reduce_buf — кэш аллокации).
  * @note Требует #if ENABLE_ROCM. Зависит от kernels mean_reduce_phase1/_final.
  * @see drv_gpu_lib::GpuKernelOp — базовый Layer 3.
- * @see statistics::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
+ * @see dsp::stats::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
  */
 class MeanReductionOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -149,6 +149,6 @@ private:
   drv_gpu_lib::BufferSet<kBufCount> bufs_;
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

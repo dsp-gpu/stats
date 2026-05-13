@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // SnrEstimatorBenchmark — GPU benchmark для StatisticsProcessor::ComputeSnrDb (SNR_09)
@@ -21,7 +21,7 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_processor.hpp>
 #include "snr_test_helpers.hpp"
 #include <core/services/gpu_benchmark_base.hpp>
 #include <core/services/console_output.hpp>
@@ -42,17 +42,17 @@ namespace test_snr_estimator {
  * @brief GpuBenchmarkBase-наследник для замера ComputeSnrDb() через hipEvent.
  *
  * @note ROCm-only (#if ENABLE_ROCM). Caller владеет pre-allocated gpu_input.
- * @see drv_gpu_lib::GpuBenchmarkBase, statistics::StatisticsProcessor::ComputeSnrDb
+ * @see drv_gpu_lib::GpuBenchmarkBase, dsp::stats::StatisticsProcessor::ComputeSnrDb
  */
 class SnrEstimatorBenchmark : public drv_gpu_lib::GpuBenchmarkBase {
 public:
   SnrEstimatorBenchmark(
       drv_gpu_lib::IBackend* backend,
-      statistics::StatisticsProcessor& proc,
+      dsp::stats::StatisticsProcessor& proc,
       void* gpu_input,                                  // pre-allocated, owned by caller
       uint32_t n_antennas,
       uint32_t n_samples,
-      const statistics::SnrEstimationConfig& cfg,
+      const dsp::stats::SnrEstimationConfig& cfg,
       std::string instance_name,
       GpuBenchmarkBase::Config bench_cfg = {
           .n_warmup   = 3,
@@ -100,11 +100,11 @@ protected:
   }
 
 private:
-  statistics::StatisticsProcessor&    proc_;
+  dsp::stats::StatisticsProcessor&    proc_;
   void*                                gpu_input_ = nullptr;
   uint32_t                             n_antennas_ = 0;
   uint32_t                             n_samples_  = 0;
-  statistics::SnrEstimationConfig      cfg_;
+  dsp::stats::SnrEstimationConfig      cfg_;
 };
 
 }  // namespace test_snr_estimator

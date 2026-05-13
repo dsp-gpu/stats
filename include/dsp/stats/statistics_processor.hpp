@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // StatisticsProcessor — главный ROCm-фасад модуля stats (Layer 6 Ref03)
@@ -42,15 +42,15 @@
 //           SOLID: facade остаётся stateless).
 //
 // Использование:
-//   statistics::StatisticsProcessor proc(rocm_backend);
-//   statistics::StatisticsParams p{.beam_count=256, .n_point=4096};
+//   dsp::stats::StatisticsProcessor proc(rocm_backend);
+//   dsp::stats::StatisticsParams p{.beam_count=256, .n_point=4096};
 //   auto stats = proc.ComputeStatistics(iq_data, p);
 //   auto full  = proc.ComputeAll(iq_data, p);     // mean + var + std + median
 //   // SNR (CA-CFAR pipeline):
-//   statistics::SnrEstimationConfig cfg;          // defaults уже калиброваны
+//   dsp::stats::SnrEstimationConfig cfg;          // defaults уже калиброваны
 //   auto snr_res = proc.ComputeSnrDb(iq_data, n_ant, n_samp, cfg);
 //   // Классификация ветки:
-//   statistics::BranchSelector sel;
+//   dsp::stats::BranchSelector sel;
 //   auto branch = sel.Select(snr_res.snr_db_global, cfg.thresholds);
 //
 // История:
@@ -60,18 +60,18 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 #include <core/interface/gpu_context.hpp>
 #include <core/services/profiling_types.hpp>
 
 // Op classes (Layer 5)
-#include <stats/operations/mean_reduction_op.hpp>
-#include <stats/operations/welford_fused_op.hpp>
-#include <stats/operations/welford_float_op.hpp>
-#include <stats/operations/median_radix_sort_op.hpp>
-#include <stats/operations/median_histogram_op.hpp>
-#include <stats/operations/median_histogram_complex_op.hpp>
-#include <stats/operations/snr_estimator_op.hpp>  // SNR_05
+#include <dsp/stats/operations/mean_reduction_op.hpp>
+#include <dsp/stats/operations/welford_fused_op.hpp>
+#include <dsp/stats/operations/welford_float_op.hpp>
+#include <dsp/stats/operations/median_radix_sort_op.hpp>
+#include <dsp/stats/operations/median_histogram_op.hpp>
+#include <dsp/stats/operations/median_histogram_complex_op.hpp>
+#include <dsp/stats/operations/snr_estimator_op.hpp>  // SNR_05
 
 #include <core/interface/i_backend.hpp>
 
@@ -79,7 +79,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace statistics {
+namespace dsp::stats {
 
 /// ROCm profiling events для ComputeAll-методов.
 /// Vector пар (event_name, timing_data) — тот же паттерн, что HeterodyneROCmProfEvents.
@@ -93,8 +93,8 @@ using StatisticsROCmProfEvents =
  * @note Move-only (copy=delete, move noexcept). Owns GpuContext, Op'ы, FFTProcessorROCm.
  * @note Требует #if ENABLE_ROCM. Backend* — non-owning (передаётся снаружи).
  * @note PUBLIC API НЕ меняется — Python bindings (py_statistics.hpp) стабильны.
- * @see statistics::BranchSelector — stateful классификатор Low/Mid/High по SNR.
- * @see statistics::shared_buf — слоты GpuContext для этого модуля.
+ * @see dsp::stats::BranchSelector — stateful классификатор Low/Mid/High по SNR.
+ * @see dsp::stats::shared_buf — слоты GpuContext для этого модуля.
  * @ingroup grp_statistics
  */
 class StatisticsProcessor {
@@ -379,7 +379,7 @@ public:
    *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_samples   Сэмплов на антенну.
    *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
-   * @param config      Конфиг SNR-estimator (см. snr_defaults::).
+   * @param config      Конфиг SNR-estimator (см. dsp::stats::snr_defaults::).
    *   @test_ref SnrEstimationConfig
    * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
    *
@@ -471,6 +471,6 @@ private:
   static constexpr size_t kHistogramThreshold = 100'000;
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

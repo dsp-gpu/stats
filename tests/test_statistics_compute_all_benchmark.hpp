@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // test_statistics_compute_all_benchmark — бенчмарк StatisticsProcessor::ComputeAll
@@ -65,12 +65,12 @@ inline int run() {
     std::vector<std::complex<float>> data(beam_count * n_point);
     for (auto& v : data) v = std::complex<float>(dist(rng), dist(rng));
 
-    statistics::StatisticsParams params;
+    dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
     // ── StatisticsProcessor ───────────────────────────────────────────────
-    statistics::StatisticsProcessor proc(backend.get());
+    dsp::stats::StatisticsProcessor proc(backend.get());
 
     // ── Benchmark: ComputeAll ─────────────────────────────────────────────
     con.Print(0, "Stats Bench", "--- Benchmark: StatisticsProcessor::ComputeAll() ---");

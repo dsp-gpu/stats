@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file statistics_sort_gpu.hip
  * @brief GPU segmented radix sort using rocPRIM — median computation backend.
  *
@@ -20,13 +20,13 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_sort_gpu.hpp>
+#include <dsp/stats/statistics_sort_gpu.hpp>
 
 #include <rocprim/rocprim.hpp>
 #include <hip/hip_runtime.h>
 
-namespace statistics {
-namespace gpu_sort {
+namespace dsp::stats {
+namespace dsp::stats::gpu_sort {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QuerySortTempSize
@@ -86,7 +86,7 @@ hipError_t ExecuteSort(
     );
 }
 
-}  // namespace gpu_sort
-}  // namespace statistics
+} // namespace dsp::stats::gpu_sort
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

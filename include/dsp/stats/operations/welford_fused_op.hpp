@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // WelfordFusedOp — single-pass Welford по complex-входу (Layer 5 Ref03)
@@ -26,7 +26,7 @@
 //         - BufferSet<0> — нет private buffers, статус Stateless Op.
 //
 // Использование:
-//   statistics::WelfordFusedOp wel;
+//   dsp::stats::WelfordFusedOp wel;
 //   wel.Initialize(ctx);
 //   wel.Execute(beam_count, n_point);
 //   // kResult теперь содержит beam_count × {mean_re, mean_im, mean_mag, var, std}
@@ -41,13 +41,13 @@
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
 #include <core/interface/gpu_context.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_types.hpp>
 
 #include <hip/hip_runtime.h>
 #include <stdexcept>
 #include <string>
 
-namespace statistics {
+namespace dsp::stats {
 
 /**
  * @class WelfordFusedOp
@@ -56,8 +56,8 @@ namespace statistics {
  * @note Stateless (BufferSet<0>, нет private buffers).
  * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_fused`.
  * @note Численно устойчив (online Welford vs naive sum(x²)−(sum(x))²/n).
- * @see statistics::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
- * @see statistics::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
+ * @see dsp::stats::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
+ * @see dsp::stats::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
  */
 class WelfordFusedOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -113,6 +113,6 @@ private:
   drv_gpu_lib::BufferSet<0> bufs_;  // no private buffers
 };
 
-}  // namespace statistics
+} // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

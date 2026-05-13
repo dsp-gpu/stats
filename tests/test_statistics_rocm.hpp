@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // test_statistics_rocm — тесты StatisticsProcessor (15 сценариев, ROCm)
@@ -23,7 +23,7 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_processor.hpp>
 #include <core/backends/rocm/rocm_backend.hpp>
 #include <core/backends/rocm/rocm_core.hpp>
 
@@ -41,7 +41,7 @@
 
 namespace test_statistics_rocm {
 
-using namespace statistics;
+using namespace dsp::stats;
 using namespace drv_gpu_lib;
 using namespace gpu_test_utils;
 

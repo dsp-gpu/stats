@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // ============================================================================
 // ComputeAllBenchmarkROCm — GPU benchmark для StatisticsProcessor::ComputeAll
@@ -21,7 +21,7 @@
 
 #if ENABLE_ROCM
 
-#include <stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_processor.hpp>
 #include <core/services/gpu_benchmark_base.hpp>
 #include <core/services/profiling/profiling_facade.hpp>
 
@@ -37,14 +37,14 @@ namespace test_statistics_compute_all_benchmark {
  * @brief GpuBenchmarkBase-наследник: замер ComputeAll() с per-stage breakdown.
  *
  * @note ROCm-only (#if ENABLE_ROCM).
- * @see drv_gpu_lib::GpuBenchmarkBase, statistics::StatisticsProcessor::ComputeAll
+ * @see drv_gpu_lib::GpuBenchmarkBase, dsp::stats::StatisticsProcessor::ComputeAll
  */
 class ComputeAllBenchmarkROCm : public drv_gpu_lib::GpuBenchmarkBase {
 public:
   ComputeAllBenchmarkROCm(
       drv_gpu_lib::IBackend* backend,
-      statistics::StatisticsProcessor& proc,
-      const statistics::StatisticsParams& params,
+      dsp::stats::StatisticsProcessor& proc,
+      const dsp::stats::StatisticsParams& params,
       const std::vector<std::complex<float>>& data,
       GpuBenchmarkBase::Config cfg = {
           .n_warmup   = 5,
@@ -61,15 +61,15 @@ protected:
 
   /// Замер — ComputeAll с StatisticsROCmProfEvents → ProfilingFacade::BatchRecord
   void ExecuteKernelTimed() override {
-    statistics::StatisticsROCmProfEvents events;
+    dsp::stats::StatisticsROCmProfEvents events;
     proc_.ComputeAll(data_, params_, &events);
     drv_gpu_lib::profiling::ProfilingFacade::GetInstance()
         .BatchRecord(gpu_id_, "stats/compute_all", events);
   }
 
 private:
-  statistics::StatisticsProcessor&         proc_;
-  statistics::StatisticsParams             params_;
+  dsp::stats::StatisticsProcessor&         proc_;
+  dsp::stats::StatisticsParams             params_;
   std::vector<std::complex<float>>         data_;
 };
 
