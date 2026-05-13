@@ -1,4 +1,4 @@
-# Statistics — Краткий справочник
+﻿# Statistics — Краткий справочник
 
 > GPU-статистика по лучам: среднее (complex), медиана, дисперсия, СКО за один проход
 
@@ -53,20 +53,20 @@ ComputeMean:        2-phase reduction (phase1 block sum + final divide)
 ### C++
 
 ```cpp
-#include <stats/statistics_processor.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_types.hpp>
 #include <core/backends/rocm/rocm_backend.hpp>
 
 #if ENABLE_ROCM
 drv_gpu_lib::ROCmBackend backend;
 backend.Initialize(0);
 
-statistics::StatisticsProcessor proc(&backend);
+dsp::stats::StatisticsProcessor proc(&backend);
 
 std::vector<std::complex<float>> data(4 * 4096);  // 4 луча × 4096 сэмплов
 // ... заполнить data (beam-major) ...
 
-statistics::StatisticsParams params;
+dsp::stats::StatisticsParams params;
 params.beam_count = 4;
 params.n_point    = 4096;
 

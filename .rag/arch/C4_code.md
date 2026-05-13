@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 repo: stats
 arch_level: c4
@@ -24,13 +24,13 @@ description: "C4 Code — реальные классы с паттернами 
 
 ## Все key_classes (FQN список)
 
-- `statistics::StatisticsProcessor` (32 методов)
-- `statistics::SnrEstimatorOp` (8 методов)
-- `statistics::BranchSelector` (4 методов)
-- `statistics::MedianRadixSortOp` (7 методов)
-- `statistics::MedianHistogramComplexOp` (4 методов)
-- `statistics::MedianHistogramOp` (4 методов)
-- `statistics::MeanReductionOp` (2 методов)
-- `statistics::WelfordFloatOp` (1 методов)
-- `statistics::WelfordFusedOp` (1 методов)
-- `statistics::SnrEstimationConfig` (1 методов)
+- `dsp::stats::StatisticsProcessor` (32 методов)
+- `dsp::stats::SnrEstimatorOp` (8 методов)
+- `dsp::stats::BranchSelector` (4 методов)
+- `dsp::stats::MedianRadixSortOp` (7 методов)
+- `dsp::stats::MedianHistogramComplexOp` (4 методов)
+- `dsp::stats::MedianHistogramOp` (4 методов)
+- `dsp::stats::MeanReductionOp` (2 методов)
+- `dsp::stats::WelfordFloatOp` (1 методов)
+- `dsp::stats::WelfordFusedOp` (1 методов)
+- `dsp::stats::SnrEstimationConfig` (1 методов)

@@ -1,4 +1,4 @@
-# Statistics — API Reference
+﻿# Statistics — API Reference
 
 > Полный справочник публичного C++ и Python API модуля statistics
 
@@ -90,7 +90,7 @@ using StatisticsROCmProfEvents =
 // stats/include/stats/statistics_processor.hpp
 // Требует: #if ENABLE_ROCM
 
-namespace statistics {
+namespace dsp::stats {
 
 class StatisticsProcessor {
 public:

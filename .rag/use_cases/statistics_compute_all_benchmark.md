@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 kind: use_case
 id: statistics_compute_all_benchmark
@@ -77,7 +77,7 @@ updated_at: 2026-05-06
     std::vector<std::complex<float>> data(beam_count * n_point);
     for (auto& v : data) v = std::complex<float>(dist(rng), dist(rng));
 
-    statistics::StatisticsParams params;
+    dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 // ... (truncated)

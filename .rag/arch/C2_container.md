@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 repo: stats
 arch_level: c2
@@ -6,7 +6,7 @@ tags:
   - "#level:c2"
   - "#repo:stats"
   - "#layer:compute"
-  - "#namespace:statistics"
+  - "#namespace:dsp_stats"
   - "#namespace:test_snr_estimator"
   - "#namespace:test_snr_estimator_benchmark"
 description: "C2 Container — namespace tree и зависимости репо stats."

@@ -1,7 +1,7 @@
----
+﻿---
 schema_version: 1
 repo: stats
-class_fqn: statistics::StatisticsProcessor
+class_fqn: dsp::stats::StatisticsProcessor
 file: E:/DSP-GPU/stats/include/stats/statistics_processor.hpp
 line: 61
 brief: "Обрабатывает статистические расчеты (среднее, медиана, дисперсия) на GPU с использованием ROCm."
@@ -15,7 +15,7 @@ synonyms_en: ['GPU statistics', 'ROCm statistics', 'Data statistics', 'Radar sta
 tags: ['GPU', 'ROCm', 'статистика', 'параллельные вычисления', 'радиолокация']
 ---
 
-# `statistics::StatisticsProcessor` — карточка класса
+# `dsp::stats::StatisticsProcessor` — карточка класса
 
 > **Этот файл генерируется автоматически** командой `dsp-asst rag cards build --repo stats --class StatisticsProcessor`.
 > Не править руками — правки потеряются при следующем refresh.
@@ -35,9 +35,9 @@ tags: ['GPU', 'ROCm', 'статистика', 'параллельные вычи
 
 **Пример**:
 ```cpp
-#include "stats/statistics_processor.hpp"
+#include "dsp/stats/statistics_processor.hpp"
 
-using namespace statistics;
+using namespace dsp::stats;
 
 int main() {
     auto backend = std::make_unique<drv_gpu_lib::ROCmBackend>();
@@ -652,7 +652,7 @@ SnrEstimationResult ComputeSnrDb( const std::vector<std::complex<float>>& data, 
 
    *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
 
-   * @param config      Конфиг SNR-estimator (см. snr_defaults::).
+   * @param config      Конфиг SNR-estimator (см. dsp::stats::snr_defaults::).
 
    *   @test_ref SnrEstimationConfig
 

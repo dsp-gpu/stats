@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 kind: use_case
 id: snr_estimator_rocm
@@ -52,12 +52,12 @@ updated_at: 2026-05-06
 ```cpp
   TestPrint("[test_01] Noise only — CFAR artifact");
   auto* backend = snr_test_helpers::GetTestBackend();
-  statistics::StatisticsProcessor proc(backend);
+  dsp::stats::StatisticsProcessor proc(backend);
 
   const uint32_t n_ant = 1, n_samp = 5000;
   auto data = snr_test_helpers::MakeNoise(n_samp, /*noise_power=*/1.0f, /*seed=*/42u);
 
-  statistics::SnrEstimationConfig cfg;  // defaults: target_n_fft=0→2048, Hann, guard=5, ref=16
+  dsp::stats::SnrEstimationConfig cfg;  // defaults: target_n_fft=0→2048, Hann, guard=5, ref=16
 
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
@@ -67,9 +67,9 @@ updated_at: 2026-05-06
   assert(result.used_bins >= 1024u && result.used_bins <= 4096u);
 
   // BranchSelector с откалиброванными порогами: шум должен быть Low.
-  statistics::BranchSelector selector;
+  dsp::stats::BranchSelector selector;
   auto branch = selector.Select(result.snr_db_global, cfg.thresholds);
-  assert(branch == statistics::BranchType::Low);
+  assert(branch == dsp::stats::BranchType::Low);
 
   TestPrint("[test_01] PASS — snr_db=" + std::to_string(result.snr_db_global));
 ```

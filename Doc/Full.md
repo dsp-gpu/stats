@@ -1,4 +1,4 @@
-# Statistics — Полная документация
+﻿# Statistics — Полная документация
 
 > Статистические вычисления на GPU: среднее, медиана, дисперсия, СКО для комплексных многолучевых сигналов
 
@@ -229,7 +229,7 @@ flowchart LR
 
 ## 5. Kernels
 
-Все ядра (кроме rocPRIM) компилируются через **hiprtc** (JIT) из строки `statistics::kernels::GetStatisticsKernelSource()`.
+Все ядра (кроме rocPRIM) компилируются через **hiprtc** (JIT) из строки `dsp::stats::kernels::GetStatisticsKernelSource()`.
 
 **Параметры компиляции**: `-O3 -std=c++17 -DWARP_SIZE=N -DBLOCK_SIZE=256 [--offload-arch=gfxXXXX]`
 
@@ -365,10 +365,10 @@ r.std_dev  = __fsqrt_rn(r.variance)
 
 ```cpp
 // Query temp size (вызывается при AllocateBuffers):
-gpu_sort::QuerySortTempSize(temp_size, d_begin, d_end, total, num_segments, stream)
+dsp::stats::gpu_sort::QuerySortTempSize(temp_size, d_begin, d_end, total, num_segments, stream)
 
 // Execute sort:
-gpu_sort::ExecuteSort(temp_storage, temp_size, keys_in, keys_out,
+dsp::stats::gpu_sort::ExecuteSort(temp_storage, temp_size, keys_in, keys_out,
                       d_begin, d_end, total_elements, num_segments, stream)
 ```
 
@@ -525,8 +525,8 @@ struct FullStatisticsResult {
 ### C++ — полный пример
 
 ```cpp
-#include <stats/statistics_processor.hpp>
-#include <stats/statistics_types.hpp>
+#include <dsp/stats/statistics_processor.hpp>
+#include <dsp/stats/statistics_types.hpp>
 #include <core/backends/rocm/rocm_backend.hpp>
 
 #if ENABLE_ROCM
@@ -534,12 +534,12 @@ struct FullStatisticsResult {
 // 1. Backend и процессор
 drv_gpu_lib::ROCmBackend backend;
 backend.Initialize(0);
-statistics::StatisticsProcessor proc(&backend);
+dsp::stats::StatisticsProcessor proc(&backend);
 
 // 2. Параметры
 const uint32_t beam_count = 4;
 const uint32_t n_point = 4096;
-statistics::StatisticsParams params;
+dsp::stats::StatisticsParams params;
 params.beam_count = beam_count;
 params.n_point    = n_point;
 
@@ -795,7 +795,7 @@ stats/
 ├── include/
 │   ├── statistics_processor.hpp            # StatisticsProcessor (весь публичный API)
 │   ├── statistics_types.hpp                # StatisticsParams, MeanResult, MedianResult, StatisticsResult
-│   ├── statistics_sort_gpu.hpp             # gpu_sort::QuerySortTempSize, ExecuteSort
+│   ├── statistics_sort_gpu.hpp             # dsp::stats::gpu_sort::QuerySortTempSize, ExecuteSort
 │   └── kernels/
 │       └── statistics_kernels_rocm.hpp     # GetStatisticsKernelSource() — hiprtc JIT string
 ├── src/

@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 repo: stats
 version: 0.1.0
@@ -14,60 +14,60 @@ modules:
     - statistics
 
 key_classes:                            # auto: top по test_params
-  - fqn: statistics::SnrEstimatorOp
+  - fqn: dsp::stats::SnrEstimatorOp
     brief: "SnrEstimatorOp — Layer 5 Op for full SNR CFAR pipeline."
     maturity: alpha
     methods: 8
     test_params_rows: 5
-    test_params: test_params/statistics_SnrEstimatorOp.md
-  - fqn: statistics::MedianRadixSortOp
+    test_params: test_params/dsp_stats_SnrEstimatorOp.md
+  - fqn: dsp::stats::MedianRadixSortOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 7
     test_params_rows: 4
-    test_params: test_params/statistics_MedianRadixSortOp.md
-  - fqn: statistics::BranchSelector
+    test_params: test_params/dsp_stats_MedianRadixSortOp.md
+  - fqn: dsp::stats::BranchSelector
     brief: "Stateful branch selector with hysteresis."
     maturity: alpha
     methods: 4
     test_params_rows: 3
-    test_params: test_params/statistics_BranchSelector.md
-  - fqn: statistics::MedianHistogramComplexOp
+    test_params: test_params/dsp_stats_BranchSelector.md
+  - fqn: dsp::stats::MedianHistogramComplexOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 4
     test_params_rows: 2
-    test_params: test_params/statistics_MedianHistogramComplexOp.md
-  - fqn: statistics::MedianHistogramOp
+    test_params: test_params/dsp_stats_MedianHistogramComplexOp.md
+  - fqn: dsp::stats::MedianHistogramOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 4
     test_params_rows: 2
-    test_params: test_params/statistics_MedianHistogramOp.md
-  - fqn: statistics::MeanReductionOp
+    test_params: test_params/dsp_stats_MedianHistogramOp.md
+  - fqn: dsp::stats::MeanReductionOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 2
     test_params_rows: 2
-    test_params: test_params/statistics_MeanReductionOp.md
-  - fqn: statistics::WelfordFloatOp
+    test_params: test_params/dsp_stats_MeanReductionOp.md
+  - fqn: dsp::stats::WelfordFloatOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 1
     test_params_rows: 2
-    test_params: test_params/statistics_WelfordFloatOp.md
-  - fqn: statistics::WelfordFusedOp
+    test_params: test_params/dsp_stats_WelfordFloatOp.md
+  - fqn: dsp::stats::WelfordFusedOp
     brief: "TODO: AI-fill"
     maturity: alpha
     methods: 1
     test_params_rows: 2
-    test_params: test_params/statistics_WelfordFusedOp.md
-  - fqn: statistics::StatisticsProcessor
+    test_params: test_params/dsp_stats_WelfordFusedOp.md
+  - fqn: dsp::stats::StatisticsProcessor
     brief: "@ingroup grp_statistics"
     maturity: alpha
     methods: 32
     test_params_rows: 0
-    test_params: test_params/statistics_StatisticsProcessor.md
+    test_params: test_params/dsp_stats_StatisticsProcessor.md
   - fqn: PyStatisticsProcessor
     brief: "TODO: AI-fill"
     maturity: alpha
@@ -86,12 +86,12 @@ key_classes:                            # auto: top по test_params
     methods: 3
     test_params_rows: 0
     test_params: test_params/test_statistics_compute_all_benchmark_ComputeAllBenchmarkROCm.md
-  - fqn: statistics::SnrEstimationConfig
+  - fqn: dsp::stats::SnrEstimationConfig
     brief: "Config для SNR-estimator."
     maturity: alpha
     methods: 1
     test_params_rows: 0
-    test_params: test_params/statistics_SnrEstimationConfig.md
+    test_params: test_params/dsp_stats_SnrEstimationConfig.md
 
 test_params_summary:
   classes_with_params: 9
@@ -122,7 +122,7 @@ architecture_files:                       # auto: arch_files generator
 tags:                                    # auto-inferred (RAG_CLAUDE_C4)
   - "#layer:compute"
   - "#repo:stats"
-  - "#namespace:statistics"
+  - "#namespace:dsp_stats"
   - "#namespace:test_snr_estimator"
   - "#namespace:test_statistics_compute_all_benchmark"
   - "#pattern:Pipeline:StatisticsProcessor"
