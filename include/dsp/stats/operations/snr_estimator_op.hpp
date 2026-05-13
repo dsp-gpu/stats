@@ -29,7 +29,7 @@
 //           Lazy init через unique_ptr → освобождение в OnRelease.
 //         - Hann window default: Python Эксп.0 показал что без window есть
 //           −27 dB bias от sinc sidelobes. Калибровано config.window =
-//           dsp::stats::snr_defaults::kDefaultWindow = Hann.
+//           ::dsp::stats::snr_defaults::kDefaultWindow = Hann.
 //         - squared=true в ProcessMagnitudesToGPU: power spectrum |X|², без
 //           sqrt — для CFAR ratio sqrt не нужен (отношение mean(|X|²) одинаково
 //           корректно), даёт ~7× speedup на RDNA (sqrt ≈ 25 cycles).
@@ -43,11 +43,11 @@
 //           validate, чтобы не упасть в kernel-launch с непонятным сообщением.
 //
 // Использование:
-//   dsp::stats::SnrEstimatorOp snr_op;
+//   ::dsp::stats::SnrEstimatorOp snr_op;
 //   snr_op.SetupFft(rocm_backend);     // один раз, до Initialize
 //   snr_op.Initialize(stats_ctx);
-//   dsp::stats::SnrEstimationConfig cfg;        // defaults уже калиброваны
-//   dsp::stats::SnrEstimationResult res;
+//   ::dsp::stats::SnrEstimationConfig cfg;        // defaults уже калиброваны
+//   ::dsp::stats::SnrEstimationResult res;
 //   snr_op.Execute(gpu_iq, n_ant, n_samp, cfg, res);
 //   // res.snr_db_global — медиана SNR по подвыборке антенн
 //
@@ -82,9 +82,9 @@ namespace dsp::stats {
  * @note Требует #if ENABLE_ROCM. Зависит от kernels gather_decimated + peak_cfar.
  * @note Калибровано Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR mean).
  * @note Lifecycle: SetupFft(backend) → Initialize(ctx) → Execute(...) → Release.
- * @see dsp::stats::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
- * @see dsp::spectrum::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
- * @see dsp::stats::MedianRadixSortOp — переиспользуется для медианы по антеннам.
+ * @see ::dsp::stats::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
+ * @see ::dsp::spectrum::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
+ * @see ::dsp::stats::MedianRadixSortOp — переиспользуется для медианы по антеннам.
  */
 class SnrEstimatorOp : public drv_gpu_lib::GpuKernelOp {
 public:
@@ -105,7 +105,7 @@ public:
    * только backend (низкоуровневый stream owner).
    */
   void SetupFft(drv_gpu_lib::IBackend* fft_backend) {
-    fft_processor_ = std::make_unique<dsp::spectrum::FFTProcessorROCm>(fft_backend);
+    fft_processor_ = std::make_unique<::dsp::spectrum::FFTProcessorROCm>(fft_backend);
   }
 
   /**
@@ -142,7 +142,7 @@ public:
     // 1. Compute auto-parameters (0 → default from snr_defaults)
     const uint32_t target_n_fft = (config.target_n_fft > 0)
         ? config.target_n_fft
-        : dsp::stats::snr_defaults::kTargetNFft;
+        : ::dsp::stats::snr_defaults::kTargetNFft;
 
     const uint32_t step_samples = (config.step_samples > 0)
         ? config.step_samples
@@ -150,7 +150,7 @@ public:
 
     const uint32_t step_antennas = (config.step_antennas > 0)
         ? config.step_antennas
-        : CeilDiv(n_antennas, dsp::stats::snr_defaults::kTargetAntennasMedian);
+        : CeilDiv(n_antennas, ::dsp::stats::snr_defaults::kTargetAntennasMedian);
 
     const uint32_t n_actual  = n_samples / step_samples;
     const uint32_t n_ant_out = CeilDiv(n_antennas, step_antennas);
@@ -168,7 +168,7 @@ public:
           std::to_string(n_actual));
     }
 
-    // 2. Allocate shared buffers (slots из dsp::stats::shared_buf)
+    // 2. Allocate shared buffers (slots из ::dsp::stats::shared_buf)
     const size_t gather_bytes =
         (size_t)n_ant_out * (size_t)n_actual * sizeof(float) * 2;
     ctx_->RequireShared(shared_buf::kGatherOutput, gather_bytes);
@@ -188,7 +188,7 @@ public:
                   step_antennas, step_samples, n_ant_out, n_actual);
 
     // 4. Stage 2: FFT → |X|² через FFTProcessorROCm (с Hann window!)
-    dsp::spectrum::FFTProcessorParams fft_params;
+    ::dsp::spectrum::FFTProcessorParams fft_params;
     fft_params.beam_count   = n_ant_out;
     fft_params.n_point      = n_actual;
     fft_params.repeat_count = 1;
@@ -267,7 +267,7 @@ protected:
   }
 
 private:
-  std::unique_ptr<dsp::spectrum::FFTProcessorROCm> fft_processor_;
+  std::unique_ptr<::dsp::spectrum::FFTProcessorROCm> fft_processor_;
   MedianRadixSortOp median_op_;
 
   static uint32_t CeilDiv(uint32_t a, uint32_t b) {

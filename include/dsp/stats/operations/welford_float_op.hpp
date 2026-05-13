@@ -25,7 +25,7 @@
 //         - BufferSet<0> — Op stateless, all temp memory в LDS.
 //
 // Использование:
-//   dsp::stats::WelfordFloatOp wf;
+//   ::dsp::stats::WelfordFloatOp wf;
 //   wf.Initialize(ctx);
 //   // kMagnitudes уже заполнен (магнитуды compute или Python upload)
 //   wf.Execute(beam_count, n_point);
@@ -56,7 +56,7 @@ namespace dsp::stats {
  * @note Stateless (BufferSet<0>, all temp в LDS).
  * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_float`.
  * @note mean_re/mean_im в выходе ВСЕГДА 0 (вход не комплексный).
- * @see dsp::stats::WelfordFusedOp — аналог по complex-входу (single-pass).
+ * @see ::dsp::stats::WelfordFusedOp — аналог по complex-входу (single-pass).
  */
 class WelfordFloatOp : public drv_gpu_lib::GpuKernelOp {
 public:

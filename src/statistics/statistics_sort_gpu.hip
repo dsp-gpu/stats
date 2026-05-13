@@ -26,7 +26,7 @@
 #include <hip/hip_runtime.h>
 
 namespace dsp::stats {
-namespace dsp::stats::gpu_sort {
+namespace gpu_sort {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QuerySortTempSize
@@ -86,7 +86,7 @@ hipError_t ExecuteSort(
     );
 }
 
-} // namespace dsp::stats::gpu_sort
+} // namespace gpu_sort
 } // namespace dsp::stats
 
 #endif  // ENABLE_ROCM

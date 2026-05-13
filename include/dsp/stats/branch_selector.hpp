@@ -29,7 +29,7 @@
 //           ветку вверх через все пороги за один вызов.
 //
 // Использование:
-//   dsp::stats::BranchSelector sel;
+//   ::dsp::stats::BranchSelector sel;
 //   while (running) {
 //     auto r = proc.ComputeSnrDb(iq, n_ant, n_samp, cfg);
 //     auto branch = sel.Select(r.snr_db_global, cfg.thresholds);
@@ -58,8 +58,8 @@ namespace dsp::stats {
  * @note NOT thread-safe — один экземпляр на поток/pipeline.
  * @note Header-only (inline методы); состояние = одна enum-переменная.
  * @note NaN/Inf оставляют ветку прежней (плохой фрейм не ломает каскад).
- * @see dsp::stats::SnrEstimationResult — источник snr_db_global.
- * @see dsp::stats::BranchThresholds — пороги (калибровано Python Эксп.5).
+ * @see ::dsp::stats::SnrEstimationResult — источник snr_db_global.
+ * @see ::dsp::stats::BranchThresholds — пороги (калибровано Python Эксп.5).
  *
  * Переходы (с защитой через hysteresis h):
  *   Low  → Mid:  snr > low_to_mid + h

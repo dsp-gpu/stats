@@ -34,7 +34,7 @@
 //           (по beam_count×u32). Lazy alloc через AllocatePrivateBuffers.
 //
 // Использование:
-//   dsp::stats::MedianHistogramOp mh;
+//   ::dsp::stats::MedianHistogramOp mh;
 //   mh.Initialize(ctx);
 //   // kMagnitudes уже заполнен (compute_magnitudes или float Python upload)
 //   mh.Execute(beam_count, n_point);
@@ -68,8 +68,8 @@ namespace dsp::stats {
  * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
  * @note Требует #if ENABLE_ROCM. Зависит от kernels histogram_median_pass + find_median_bucket.
  * @note Эффективен для n_point > kHistogramThreshold (≈100K). Для меньших — MedianRadixSortOp.
- * @see dsp::stats::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
- * @see dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).
+ * @see ::dsp::stats::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
+ * @see ::dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).
  */
 class MedianHistogramOp : public drv_gpu_lib::GpuKernelOp {
 public:

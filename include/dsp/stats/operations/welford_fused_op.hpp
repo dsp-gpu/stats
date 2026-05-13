@@ -26,7 +26,7 @@
 //         - BufferSet<0> — нет private buffers, статус Stateless Op.
 //
 // Использование:
-//   dsp::stats::WelfordFusedOp wel;
+//   ::dsp::stats::WelfordFusedOp wel;
 //   wel.Initialize(ctx);
 //   wel.Execute(beam_count, n_point);
 //   // kResult теперь содержит beam_count × {mean_re, mean_im, mean_mag, var, std}
@@ -56,8 +56,8 @@ namespace dsp::stats {
  * @note Stateless (BufferSet<0>, нет private buffers).
  * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_fused`.
  * @note Численно устойчив (online Welford vs naive sum(x²)−(sum(x))²/n).
- * @see dsp::stats::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
- * @see dsp::stats::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
+ * @see ::dsp::stats::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
+ * @see ::dsp::stats::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
  */
 class WelfordFusedOp : public drv_gpu_lib::GpuKernelOp {
 public:

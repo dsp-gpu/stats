@@ -31,7 +31,7 @@
 //           реаллокации (фасад вызывает Mean → потом Welford на kResult).
 //
 // Использование:
-//   dsp::stats::MeanReductionOp mean_op;
+//   ::dsp::stats::MeanReductionOp mean_op;
 //   mean_op.Initialize(ctx);              // один раз
 //   ctx.RequireShared(shared_buf::kInput, beam_count*n_point*sizeof(float)*2);
 //   // upload в kInput
@@ -62,7 +62,7 @@ namespace dsp::stats {
  * @note Stateless по семантике (private reduce_buf — кэш аллокации).
  * @note Требует #if ENABLE_ROCM. Зависит от kernels mean_reduce_phase1/_final.
  * @see drv_gpu_lib::GpuKernelOp — базовый Layer 3.
- * @see dsp::stats::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
+ * @see ::dsp::stats::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
  */
 class MeanReductionOp : public drv_gpu_lib::GpuKernelOp {
 public:

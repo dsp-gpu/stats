@@ -42,15 +42,15 @@
 //           SOLID: facade остаётся stateless).
 //
 // Использование:
-//   dsp::stats::StatisticsProcessor proc(rocm_backend);
-//   dsp::stats::StatisticsParams p{.beam_count=256, .n_point=4096};
+//   ::dsp::stats::StatisticsProcessor proc(rocm_backend);
+//   ::dsp::stats::StatisticsParams p{.beam_count=256, .n_point=4096};
 //   auto stats = proc.ComputeStatistics(iq_data, p);
 //   auto full  = proc.ComputeAll(iq_data, p);     // mean + var + std + median
 //   // SNR (CA-CFAR pipeline):
-//   dsp::stats::SnrEstimationConfig cfg;          // defaults уже калиброваны
+//   ::dsp::stats::SnrEstimationConfig cfg;          // defaults уже калиброваны
 //   auto snr_res = proc.ComputeSnrDb(iq_data, n_ant, n_samp, cfg);
 //   // Классификация ветки:
-//   dsp::stats::BranchSelector sel;
+//   ::dsp::stats::BranchSelector sel;
 //   auto branch = sel.Select(snr_res.snr_db_global, cfg.thresholds);
 //
 // История:
@@ -93,8 +93,8 @@ using StatisticsROCmProfEvents =
  * @note Move-only (copy=delete, move noexcept). Owns GpuContext, Op'ы, FFTProcessorROCm.
  * @note Требует #if ENABLE_ROCM. Backend* — non-owning (передаётся снаружи).
  * @note PUBLIC API НЕ меняется — Python bindings (py_statistics.hpp) стабильны.
- * @see dsp::stats::BranchSelector — stateful классификатор Low/Mid/High по SNR.
- * @see dsp::stats::shared_buf — слоты GpuContext для этого модуля.
+ * @see ::dsp::stats::BranchSelector — stateful классификатор Low/Mid/High по SNR.
+ * @see ::dsp::stats::shared_buf — слоты GpuContext для этого модуля.
  * @ingroup grp_statistics
  */
 class StatisticsProcessor {
@@ -379,7 +379,7 @@ public:
    *   @test { range=[1..50000], value=128, unit="лучей/каналов", error_values=[-1, 100000, 3.14] }
    * @param n_samples   Сэмплов на антенну.
    *   @test { range=[100..1300000], value=6000, error_values=[-1, 3000000, 3.14] }
-   * @param config      Конфиг SNR-estimator (см. dsp::stats::snr_defaults::).
+   * @param config      Конфиг SNR-estimator (см. ::dsp::stats::snr_defaults::).
    *   @test_ref SnrEstimationConfig
    * @return SnrEstimationResult с snr_db_global, used_antennas, used_bins, n_actual.
    *

@@ -25,7 +25,7 @@
 //         - BufferSet<3> идентичен MedianHistogramOp: hist, prefix, value.
 //
 // Использование:
-//   dsp::stats::MedianHistogramComplexOp mhc;
+//   ::dsp::stats::MedianHistogramComplexOp mhc;
 //   mhc.Initialize(ctx);
 //   // kInput содержит complex<float>[beam_count × n_point]
 //   mhc.Execute(beam_count, n_point);
@@ -59,8 +59,8 @@ namespace dsp::stats {
  * @note Не аллоцирует промежуточный |z|-буфер — экономия памяти vs Magnitudes+Histogram.
  * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
  * @note Требует #if ENABLE_ROCM. Kernels: histogram_median_pass_complex + find_median_bucket.
- * @see dsp::stats::MedianHistogramOp — аналог по уже-вычисленным float magnitudes.
- * @see dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort.
+ * @see ::dsp::stats::MedianHistogramOp — аналог по уже-вычисленным float magnitudes.
+ * @see ::dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort.
  */
 class MedianHistogramComplexOp : public drv_gpu_lib::GpuKernelOp {
 public:

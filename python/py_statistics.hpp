@@ -40,11 +40,11 @@ public:
     auto vec = to_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::MeanResult> results;
+    std::vector<::dsp::stats::MeanResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeMean(vec, params);
@@ -68,11 +68,11 @@ public:
     auto vec = to_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::MedianResult> results;
+    std::vector<::dsp::stats::MedianResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeMedian(vec, params);
@@ -95,11 +95,11 @@ public:
     auto vec = to_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::StatisticsResult> results;
+    std::vector<::dsp::stats::StatisticsResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeStatistics(vec, params);
@@ -134,11 +134,11 @@ public:
     auto vec = to_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::FullStatisticsResult> results;
+    std::vector<::dsp::stats::FullStatisticsResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeAll(vec, params);
@@ -171,11 +171,11 @@ public:
     auto vec = to_float_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::FullStatisticsResult> results;
+    std::vector<::dsp::stats::FullStatisticsResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeAllFloat(vec, params);
@@ -210,11 +210,11 @@ public:
     auto vec = to_float_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::StatisticsResult> results;
+    std::vector<::dsp::stats::StatisticsResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeStatisticsFloat(vec, params);
@@ -244,11 +244,11 @@ public:
     auto vec = to_float_vector(data, beam_count);
     uint32_t n_point = static_cast<uint32_t>(vec.size() / beam_count);
 
-    dsp::stats::StatisticsParams params;
+    ::dsp::stats::StatisticsParams params;
     params.beam_count = beam_count;
     params.n_point    = n_point;
 
-    std::vector<dsp::stats::MedianResult> results;
+    std::vector<::dsp::stats::MedianResult> results;
     {
       py::gil_scoped_release release;
       results = proc_.ComputeMedianFloat(vec, params);
@@ -268,11 +268,11 @@ public:
   // SNR_07: compute_snr_db (SNR-estimator, CA-CFAR)
   // ==========================================================================
 
-  dsp::stats::SnrEstimationResult compute_snr_db(
+  ::dsp::stats::SnrEstimationResult compute_snr_db(
       py::array_t<std::complex<float>, py::array::c_style | py::array::forcecast> data_np,
       uint32_t n_antennas,
       uint32_t n_samples,
-      const dsp::stats::SnrEstimationConfig& config)
+      const ::dsp::stats::SnrEstimationConfig& config)
   {
     if (data_np.ndim() != 2) {
       throw std::invalid_argument("compute_snr_db: expected 2D numpy array");
@@ -291,7 +291,7 @@ public:
     const std::complex<float>* ptr = static_cast<const std::complex<float>*>(buf.ptr);
     std::vector<std::complex<float>> data(ptr, ptr + data_np.size());
 
-    dsp::stats::SnrEstimationResult result;
+    ::dsp::stats::SnrEstimationResult result;
     {
       py::gil_scoped_release release;
       result = proc_.ComputeSnrDb(data, n_antennas, n_samples, config);
@@ -341,7 +341,7 @@ private:
   }
 
   ROCmGPUContext& ctx_;
-  dsp::stats::StatisticsProcessor proc_;
+  ::dsp::stats::StatisticsProcessor proc_;
 };
 
 // ============================================================================
