@@ -23,13 +23,13 @@ add_library(DspStats::DspStats ALIAS DspStats)
 set_target_properties(DspStats PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_sources(DspStats PRIVATE
-  src/statistics/src/statistics_processor.cpp
-  src/statistics/src/statistics_sort_gpu.hip
+  src/statistics/statistics_processor.cpp
+  src/statistics/statistics_sort_gpu.hip
 )
 
 target_include_directories(DspStats
   PUBLIC
-    # Стандарт AMD: #include <stats/operations/...>
+    # Стандарт DSP-GPU: #include <dsp/stats/operations/...>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:include>

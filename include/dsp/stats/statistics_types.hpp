@@ -20,7 +20,7 @@
  *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
-#include <spectrum/types/window_type.hpp>  // fft_processor::WindowType (SNR_02b)
+#include <dsp/spectrum/types/window_type.hpp>  // dsp::spectrum::WindowType (SNR_02b)
 
 #include <vector>
 #include <complex>
@@ -147,8 +147,8 @@ namespace dsp::stats::snr_defaults {
 
   /// Default window — Hann (решает проблему sinc sidelobes).
   /// rect даёт −27 dB bias! Python Эксп.0 показал Hann — оптимальный компромисс.
-  static constexpr fft_processor::WindowType kDefaultWindow =
-      fft_processor::WindowType::Hann;
+  static constexpr dsp::spectrum::WindowType kDefaultWindow =
+      dsp::spectrum::WindowType::Hann;
 } // namespace dsp::stats::snr_defaults
 
 /// Branch category для переключения обработки Low/Mid/High SNR
@@ -191,7 +191,7 @@ struct SnrEstimationConfig {
 
   /// Window function для FFT pre-processing.
   /// Hann (default) решает проблему sinc sidelobes.
-  fft_processor::WindowType window = dsp::stats::snr_defaults::kDefaultWindow;
+  dsp::spectrum::WindowType window = dsp::stats::snr_defaults::kDefaultWindow;
 
   bool     with_dechirp = false;     ///< reserved: встроить дечирп в pipeline
   BranchThresholds thresholds;       ///< калиброванные пороги

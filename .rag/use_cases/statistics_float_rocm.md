@@ -1,4 +1,4 @@
----
+﻿---
 schema_version: 1
 kind: use_case
 id: statistics_float_rocm
@@ -55,7 +55,7 @@ updated_at: 2026-05-06
   ROCmBackend backend;
   backend.Initialize(gpu_id);
   StatisticsProcessor stats(&backend);
-  fft_processor::ComplexToMagPhaseROCm mag_proc(&backend);
+  dsp::spectrum::ComplexToMagPhaseROCm mag_proc(&backend);
 
   TestRunner runner(&backend, "StatsFloat", gpu_id);
 

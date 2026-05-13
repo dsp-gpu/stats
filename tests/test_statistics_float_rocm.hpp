@@ -24,7 +24,7 @@
 #if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
-#include <spectrum/complex_to_mag_phase_rocm.hpp>
+#include <dsp/spectrum/complex_to_mag_phase_rocm.hpp>
 #include "test_helpers_rocm.hpp"
 #include <core/backends/rocm/rocm_backend.hpp>
 
@@ -62,7 +62,7 @@ inline void run() {
   ROCmBackend backend;
   backend.Initialize(gpu_id);
   StatisticsProcessor stats(&backend);
-  fft_processor::ComplexToMagPhaseROCm mag_proc(&backend);
+  dsp::spectrum::ComplexToMagPhaseROCm mag_proc(&backend);
 
   TestRunner runner(&backend, "StatsFloat", gpu_id);
 
@@ -181,7 +181,7 @@ inline void run() {
       }
     }
 
-    fft_processor::MagPhaseParams mp;
+    dsp::spectrum::MagPhaseParams mp;
     mp.beam_count = kBeams;
     mp.n_point = kN;
     mp.norm_coeff = 1.0f;
@@ -215,7 +215,7 @@ inline void run() {
     for (uint32_t k = 0; k < kN; ++k)
       cptr[k] = {3.0f, 0.0f};
 
-    fft_processor::MagPhaseParams mp;
+    dsp::spectrum::MagPhaseParams mp;
     mp.beam_count = 1;
     mp.n_point = kN;
     mp.norm_coeff = 1.0f;

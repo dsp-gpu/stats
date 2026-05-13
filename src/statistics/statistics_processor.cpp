@@ -17,7 +17,7 @@
 #include <dsp/stats/kernels/statistics_kernels_rocm.hpp>
 #include <dsp/stats/kernels/gather_decimated_kernel.hpp>  // SNR_03
 #include <dsp/stats/kernels/peak_cfar_kernel.hpp>         // SNR_05
-#include <spectrum/utils/rocm_profiling_helpers.hpp>
+#include <dsp/spectrum/utils/rocm_profiling_helpers.hpp>
 
 #include <core/services/console_output.hpp>
 

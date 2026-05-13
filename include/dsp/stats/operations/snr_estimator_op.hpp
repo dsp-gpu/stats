@@ -63,7 +63,7 @@
 #include <core/interface/i_backend.hpp>
 #include <dsp/stats/statistics_types.hpp>
 #include <dsp/stats/operations/median_radix_sort_op.hpp>
-#include <spectrum/fft_processor_rocm.hpp>
+#include <dsp/spectrum/fft_processor_rocm.hpp>
 
 #include <hip/hip_runtime.h>
 
@@ -83,7 +83,7 @@ namespace dsp::stats {
  * @note Калибровано Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR mean).
  * @note Lifecycle: SetupFft(backend) → Initialize(ctx) → Execute(...) → Release.
  * @see dsp::stats::BranchSelector — классификация result.snr_db_global → Low/Mid/High.
- * @see fft_processor::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
+ * @see dsp::spectrum::FFTProcessorROCm — внутренний FFT-фасад (свой GpuContext).
  * @see dsp::stats::MedianRadixSortOp — переиспользуется для медианы по антеннам.
  */
 class SnrEstimatorOp : public drv_gpu_lib::GpuKernelOp {
@@ -105,7 +105,7 @@ public:
    * только backend (низкоуровневый stream owner).
    */
   void SetupFft(drv_gpu_lib::IBackend* fft_backend) {
-    fft_processor_ = std::make_unique<fft_processor::FFTProcessorROCm>(fft_backend);
+    fft_processor_ = std::make_unique<dsp::spectrum::FFTProcessorROCm>(fft_backend);
   }
 
   /**
@@ -188,7 +188,7 @@ public:
                   step_antennas, step_samples, n_ant_out, n_actual);
 
     // 4. Stage 2: FFT → |X|² через FFTProcessorROCm (с Hann window!)
-    fft_processor::FFTProcessorParams fft_params;
+    dsp::spectrum::FFTProcessorParams fft_params;
     fft_params.beam_count   = n_ant_out;
     fft_params.n_point      = n_actual;
     fft_params.repeat_count = 1;
@@ -267,7 +267,7 @@ protected:
   }
 
 private:
-  std::unique_ptr<fft_processor::FFTProcessorROCm> fft_processor_;
+  std::unique_ptr<dsp::spectrum::FFTProcessorROCm> fft_processor_;
   MedianRadixSortOp median_op_;
 
   static uint32_t CeilDiv(uint32_t a, uint32_t b) {
