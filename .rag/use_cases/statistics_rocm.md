@@ -3,47 +3,33 @@ schema_version: 1
 kind: use_case
 id: statistics_rocm
 repo: stats
-title: "Вычисление статистических характеристик на GPU"
+title: "Statistics Rocm"
 synonyms:
   ru:
-    - "расчет среднего значения на GPU"
-    - "обработка данных с использованием ROCm"
-    - "вычисление статистики для массива"
-    - "параллельная обработка данных на GPU"
-    - "вычисление среднего для батча"
-    - "статистика на GPU с ROCm"
-    - "обработка сигналов с использованием GPU"
-    - "вычисление характеристик на GPU"
+    - []
   en:
-    - "compute mean on GPU"
-    - "statistical processing with ROCm"
-    - "batch data processing on GPU"
-    - "GPU-based statistical calculation"
-    - "ROCm statistical computation"
-    - "mean calculation for array"
-    - "parallel data processing with GPU"
-    - "statistical analysis on GPU"
+    - []
 primary_class: (unknown)
 primary_method: (unknown)
 related_classes:
 related_use_cases:
-  - stats__helpers_rocm__usecase__v1
+  - stats__statistics_float_rocm__usecase__v1
   - spectrum__moving_average_rocm__usecase__v1
-  - spectrum__lch_farrow_rocm__usecase__v1
+  - core__rocm_backend__usecase__v1
 maturity: stable
 language: cpp
-tags: [stats, rocm, gpu, statistics, batch, processing, computation, parallel, data]
-ai_generated: true
+tags: []
+ai_generated: false
 human_verified: false
-operator: ai
-updated_at: 2026-05-06
+operator: alex
+updated_at: 2026-05-13
 ---
 
-# Use-case: Вычисление статистических характеристик на GPU
+# Use-case: Statistics Rocm
 
 ## Когда применять
 
-Когда требуется выполнять статистические вычисления на GPU с использованием ROCm для обработки больших массивов данных
+_LLM-fallback: см. описание класса._
 
 ## Решение
 
@@ -89,10 +75,10 @@ _Не определены (нет `@throws` в Doxygen primary_method)._
 
 ## Что делать дальше
 
-- См. [stats__helpers_rocm__usecase__v1](./helpers_rocm.md)
+- См. [stats__statistics_float_rocm__usecase__v1](./statistics_float_rocm.md)
 - См. [spectrum__moving_average_rocm__usecase__v1](./moving_average_rocm.md)
-- См. [spectrum__lch_farrow_rocm__usecase__v1](./lch_farrow_rocm.md)
+- См. [core__rocm_backend__usecase__v1](./rocm_backend.md)
 
 ## Ссылки
 
-- Источник кода: `E:/DSP-GPU/stats/tests/test_statistics_rocm.hpp:1`
+- Источник кода: `/home/alex/DSP-GPU/stats/tests/test_statistics_rocm.hpp:1`

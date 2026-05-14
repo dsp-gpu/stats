@@ -3,48 +3,38 @@ schema_version: 1
 kind: use_case
 id: snr_estimator_benchmark
 repo: stats
-title: "Как протестировать оценку СНР на GPU"
+title: "Snr Estimator Benchmark"
 synonyms:
   ru:
-    - "как профилировать оценку СНР батчем"
-    - "оценка СНР для массива антенн на GPU"
-    - "тестирование СНР-оценки с использованием GPU"
-    - "benchmark оценки СНР на ROCm"
-    - "как измерить производительность СНР-алгоритма"
-    - "тестирование СНР-обработки на GPU"
-    - "оценка СНР с батчами на GPU"
-    - "как профилировать СНР-алгоритм"
+    - []
   en:
-    - "how to benchmark SNR estimation on GPU"
-    - "batch SNR estimation profiling"
-    - "SNR estimation for antenna array on GPU"
-    - "GPU-based SNR estimation benchmark"
-    - "how to measure SNR estimator performance"
-    - "SNR processing benchmark on ROCm"
-    - "batch SNR calculation GPU test"
-    - "SNR algorithm profiling on GPU"
+    - []
 primary_class: test_snr_estimator::SnrEstimatorBenchmark
 primary_method: SnrEstimatorBenchmark
 related_classes:
+  - strategies::statistics_processor
+  - strategies::all_maxima_pipeline_rocm
   - stats::snr_estimator_op
+  - spectrum::fft_processor_rocm
+  - stats::statistics_processor
 related_use_cases:
+  - core__profile_analyzer__usecase__v1
   - spectrum__filters_benchmark_rocm__usecase__v1
-  - spectrum__moving_average_rocm__usecase__v1
-  - spectrum__lch_farrow_benchmark_rocm__usecase__v1
+  - spectrum__fft_maxima_benchmark_rocm__usecase__v1
 maturity: stable
 language: cpp
-tags: [stats, snr_estimation, gpu_benchmark, batch_processing, roc_m, fft, antenna_array, signal_processing, performance_profiling, dsp_gpu]
-ai_generated: true
+tags: []
+ai_generated: false
 human_verified: false
-operator: ai
-updated_at: 2026-05-06
+operator: alex
+updated_at: 2026-05-13
 ---
 
-# Use-case: Как протестировать оценку СНР на GPU
+# Use-case: Snr Estimator Benchmark
 
 ## Когда применять
 
-Когда нужно измерить производительность SnrEstimatorOp на GPU с предварительно выделенной памятью, чтобы исключить задержки загрузки
+_LLM-fallback: см. описание класса._
 
 ## Решение
 
@@ -58,10 +48,10 @@ _Не определены (нет `@throws` в Doxygen primary_method)._
 
 ## Что делать дальше
 
+- См. [core__profile_analyzer__usecase__v1](./profile_analyzer.md)
 - См. [spectrum__filters_benchmark_rocm__usecase__v1](./filters_benchmark_rocm.md)
-- См. [spectrum__moving_average_rocm__usecase__v1](./moving_average_rocm.md)
-- См. [spectrum__lch_farrow_benchmark_rocm__usecase__v1](./lch_farrow_benchmark_rocm.md)
+- См. [spectrum__fft_maxima_benchmark_rocm__usecase__v1](./fft_maxima_benchmark_rocm.md)
 
 ## Ссылки
 
-- Источник кода: `E:/DSP-GPU/stats/tests/test_snr_estimator_benchmark.hpp:1`
+- Источник кода: `/home/alex/DSP-GPU/stats/tests/test_snr_estimator_benchmark.hpp:1`

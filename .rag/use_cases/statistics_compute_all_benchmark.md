@@ -1,49 +1,35 @@
-﻿---
+---
 schema_version: 1
 kind: use_case
 id: statistics_compute_all_benchmark
 repo: stats
-title: "Как вычислить статистики для массива данных на GPU"
+title: "Statistics Compute All Benchmark"
 synonyms:
   ru:
-    - "вычисление статистик батчем"
-    - "fft для массива антенн"
-    - "обработка сигналов на GPU"
-    - "статистика для батча данных"
-    - "вычисление характеристик массива"
-    - "аналитика сигналов на GPU"
-    - "статистические вычисления батчем"
-    - "обработка данных с GPU"
+    - []
   en:
-    - "compute statistics batch"
-    - "fft for antenna array"
-    - "signal processing on gpu"
-    - "statistics for batch data"
-    - "calculate array characteristics"
-    - "signal analytics on gpu"
-    - "statistical computations batch"
-    - "data processing with gpu"
+    - []
 primary_class: (unknown)
 primary_method: (unknown)
 related_classes:
 related_use_cases:
-  - stats__helpers_rocm__usecase__v1
-  - spectrum__lch_farrow_rocm__usecase__v1
+  - stats__snr_estimator_benchmark__usecase__v1
   - spectrum__lch_farrow_benchmark_rocm__usecase__v1
+  - spectrum__filters_benchmark_rocm__usecase__v1
 maturity: stable
 language: cpp
-tags: [stats, rocml, fft, batch, antenna_array, gpu_computing, statistics, signal_processing, benchmark]
-ai_generated: true
+tags: []
+ai_generated: false
 human_verified: false
-operator: ai
-updated_at: 2026-05-06
+operator: alex
+updated_at: 2026-05-13
 ---
 
-# Use-case: Как вычислить статистики для массива данных на GPU
+# Use-case: Statistics Compute All Benchmark
 
 ## Когда применять
 
-Когда требуется выполнять вычисления статистических характеристик для больших массивов данных с использованием GPU, особенно в контексте обработки сигналов и антенных массивов.
+_LLM-fallback: см. описание класса._
 
 ## Решение
 
@@ -89,10 +75,10 @@ _Не определены (нет `@throws` в Doxygen primary_method)._
 
 ## Что делать дальше
 
-- См. [stats__helpers_rocm__usecase__v1](./helpers_rocm.md)
-- См. [spectrum__lch_farrow_rocm__usecase__v1](./lch_farrow_rocm.md)
+- См. [stats__snr_estimator_benchmark__usecase__v1](./snr_estimator_benchmark.md)
 - См. [spectrum__lch_farrow_benchmark_rocm__usecase__v1](./lch_farrow_benchmark_rocm.md)
+- См. [spectrum__filters_benchmark_rocm__usecase__v1](./filters_benchmark_rocm.md)
 
 ## Ссылки
 
-- Источник кода: `E:/DSP-GPU/stats/tests/test_statistics_compute_all_benchmark.hpp:1`
+- Источник кода: `/home/alex/DSP-GPU/stats/tests/test_statistics_compute_all_benchmark.hpp:1`

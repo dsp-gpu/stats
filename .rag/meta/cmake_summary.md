@@ -37,8 +37,8 @@ target_link_libraries(DspStats PUBLIC
 
 ```cmake
 target_sources(DspStats PRIVATE
-  src/statistics/src/statistics_processor.cpp
-  src/statistics/src/statistics_sort_gpu.hip
+  src/statistics/statistics_processor.cpp
+  src/statistics/statistics_sort_gpu.hip
 )
 ```
 
@@ -51,8 +51,8 @@ fetch_dsp_spectrum()
 find_package(hip     REQUIRED)
 find_package(rocprim REQUIRED)
 roc::rocprim)
-src/statistics/src/statistics_processor.cpp
-src/statistics/src/statistics_sort_gpu.hip
+src/statistics/statistics_processor.cpp
+src/statistics/statistics_sort_gpu.hip
 target_link_libraries(<TARGET> PUBLIC
 ```
 

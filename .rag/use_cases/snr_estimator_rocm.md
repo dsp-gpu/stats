@@ -1,49 +1,35 @@
-﻿---
+---
 schema_version: 1
 kind: use_case
 id: snr_estimator_rocm
 repo: stats
-title: "Как рассчитать SNR для антенн на GPU"
+title: "Snr Estimator Rocm"
 synonyms:
   ru:
-    - "оценка SNR для антенн на GPU"
-    - "расчет уровня шума с использованием GPU"
-    - "обработка сигналов антенн с оценкой SNR"
-    - "аналоговая обработка сигналов с GPU"
-    - "оценка отношения сигнал-шум для массивов антенн"
-    - "вычисление SNR с использованием GPU"
-    - "обработка шума в реальном времени на GPU"
-    - "анализ сигналов антенн с GPU"
+    - []
   en:
-    - "SNR estimation for antenna arrays on GPU"
-    - "noise level calculation using GPU"
-    - "signal processing for antennas with SNR estimation"
-    - "analog signal processing with GPU"
-    - "SNR evaluation for antenna arrays"
-    - "compute SNR using GPU acceleration"
-    - "real-time noise processing on GPU"
-    - "antenna signal analysis with GPU"
+    - []
 primary_class: (unknown)
 primary_method: (unknown)
 related_classes:
 related_use_cases:
-  - spectrum__moving_average_rocm__usecase__v1
   - stats__snr_estimator_benchmark__usecase__v1
-  - spectrum__lch_farrow_rocm__usecase__v1
+  - spectrum__moving_average_rocm__usecase__v1
+  - spectrum__filters_benchmark_rocm__usecase__v1
 maturity: stable
 language: cpp
-tags: [stats, snr, gpu, antenna, signal_processing, rocm, batch_processing, cfar, noise_estimation, real_time]
-ai_generated: true
+tags: []
+ai_generated: false
 human_verified: false
-operator: ai
-updated_at: 2026-05-06
+operator: alex
+updated_at: 2026-05-13
 ---
 
-# Use-case: Как рассчитать SNR для антенн на GPU
+# Use-case: Snr Estimator Rocm
 
 ## Когда применять
 
-Когда требуется оценка уровня шума в реальном времени с использованием GPU для обработки сигналов с антенн
+_LLM-fallback: см. описание класса._
 
 ## Решение
 
@@ -80,10 +66,10 @@ _Не определены (нет `@throws` в Doxygen primary_method)._
 
 ## Что делать дальше
 
-- См. [spectrum__moving_average_rocm__usecase__v1](./moving_average_rocm.md)
 - См. [stats__snr_estimator_benchmark__usecase__v1](./snr_estimator_benchmark.md)
-- См. [spectrum__lch_farrow_rocm__usecase__v1](./lch_farrow_rocm.md)
+- См. [spectrum__moving_average_rocm__usecase__v1](./moving_average_rocm.md)
+- См. [spectrum__filters_benchmark_rocm__usecase__v1](./filters_benchmark_rocm.md)
 
 ## Ссылки
 
-- Источник кода: `E:/DSP-GPU/stats/tests/test_snr_estimator_rocm.hpp:1`
+- Источник кода: `/home/alex/DSP-GPU/stats/tests/test_snr_estimator_rocm.hpp:1`

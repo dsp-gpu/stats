@@ -1,49 +1,35 @@
-﻿---
+---
 schema_version: 1
 kind: use_case
 id: statistics_float_rocm
 repo: stats
-title: "Вычисление статистик массива float на GPU"
+title: "Statistics Float Rocm"
 synonyms:
   ru:
-    - "вычислить статные характеристики float на GPU"
-    - "расчет среднего и стандартного отклонения массива"
-    - "обработка массива float с GPU"
-    - "вычисление статистик для батча float"
-    - "анализ массива float на GPU"
-    - "расчет параметров распределения float"
-    - "вычисление статистик с использованием ROCm"
-    - "параллельная статистика для float"
+    - []
   en:
-    - "compute float statistics on GPU"
-    - "calculate mean and standard deviation array"
-    - "processing float array with GPU"
-    - "compute statistics for float batch"
-    - "analysis of float array on GPU"
-    - "calculation of distribution parameters float"
-    - "compute statistics using ROCm"
-    - "parallel statistics for float"
+    - []
 primary_class: (unknown)
 primary_method: (unknown)
 related_classes:
 related_use_cases:
-  - stats__helpers_rocm__usecase__v1
   - spectrum__moving_average_rocm__usecase__v1
-  - spectrum__lch_farrow_rocm__usecase__v1
+  - spectrum__filters_rocm__usecase__v1
+  - core__rocm_external_context__usecase__v1
 maturity: stable
 language: cpp
-tags: [stats, rocm, float, statistics, batch_processing, gpu_computing, parallel_processing, numerical_analysis, array_processing]
-ai_generated: true
+tags: []
+ai_generated: false
 human_verified: false
-operator: ai
-updated_at: 2026-05-06
+operator: alex
+updated_at: 2026-05-13
 ---
 
-# Use-case: Вычисление статистик массива float на GPU
+# Use-case: Statistics Float Rocm
 
 ## Когда применять
 
-Когда требуется параллельная обработка больших массивов float с высокой точностью на GPU с использованием ROCm
+_LLM-fallback: см. описание класса._
 
 ## Решение
 
@@ -89,10 +75,10 @@ _Не определены (нет `@throws` в Doxygen primary_method)._
 
 ## Что делать дальше
 
-- См. [stats__helpers_rocm__usecase__v1](./helpers_rocm.md)
 - См. [spectrum__moving_average_rocm__usecase__v1](./moving_average_rocm.md)
-- См. [spectrum__lch_farrow_rocm__usecase__v1](./lch_farrow_rocm.md)
+- См. [spectrum__filters_rocm__usecase__v1](./filters_rocm.md)
+- См. [core__rocm_external_context__usecase__v1](./rocm_external_context.md)
 
 ## Ссылки
 
-- Источник кода: `E:/DSP-GPU/stats/tests/test_statistics_float_rocm.hpp:1`
+- Источник кода: `/home/alex/DSP-GPU/stats/tests/test_statistics_float_rocm.hpp:1`
