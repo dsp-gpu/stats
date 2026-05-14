@@ -187,7 +187,19 @@ struct SnrEstimationConfig {
   uint32_t step_antennas = 0;   ///< 0 → auto (ceil(n_antennas / kTargetAntennasMedian))
   uint32_t guard_bins = ::dsp::stats::snr_defaults::kGuardBins;  ///< default 5 (калибровано)
   uint32_t ref_bins   = ::dsp::stats::snr_defaults::kRefBins;    ///< default 16 (калибровано)
-  bool     search_full_spectrum = true;            ///< false → search in [0..nFFT/2]
+  /// Диапазон поиска пика CFAR. По умолчанию `true` — поиск по всему [0..nFFT).
+  /// `false` сужает поиск к [0..nFFT/2) (только положительная половина).
+  ///
+  /// ⚠️ Для radar это **редко** правильное значение: знак Doppler и направление
+  /// цели заранее неизвестны, цель может быть на любой стороне FFT. Кроме того,
+  /// при decimation (step_samples > 1) частоты ≥ fs/2 испытывают aliasing и
+  /// попадают в положительную половину — half-search их всё равно находит
+  /// (см. бывший test_03_negative_freq[half], удалён 2026-05-14).
+  ///
+  /// Используй `false` только если **гарантированно** известно: цель в
+  /// положительной полуплоскости + decimation отсутствует (step_samples==1).
+  /// Иначе оставляй дефолт `true`.
+  bool     search_full_spectrum = true;            ///< false → search in [0..nFFT/2)
 
   /// Window function для FFT pre-processing.
   /// Hann (default) решает проблему sinc sidelobes.

@@ -27,10 +27,12 @@
 #include <dsp/stats/branch_selector.hpp>
 
 #include <core/services/console_output.hpp>
+#include <test_utils/validators/numeric.hpp>  // gpu_test_utils::InRangeError
 
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <complex>
@@ -60,13 +62,36 @@ inline void test_01_noise_only_artifact() {
 
   // H0 артефакт: E[SNR_fft_db | noise] ≈ 10·log10(ln(N_fft) + γ) ≈ 8-10 dB.
   // Широкий диапазон — CFAR имеет разброс по реализациям.
-  assert(result.snr_db_global > 3.0f && result.snr_db_global < 18.0f);
-  assert(result.used_bins >= 1024u && result.used_bins <= 4096u);
+  {
+    auto v = gpu_test_utils::InRangeError(
+        result.snr_db_global, 3.0f, 18.0f, "snr_db_global_noise_only");
+    if (!v.passed) {
+      throw std::runtime_error("test_01_noise_only_artifact: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
+  {
+    auto v = gpu_test_utils::InRangeInclusiveError(
+        result.used_bins, 1024u, 4096u, "used_bins_default_cfg");
+    if (!v.passed) {
+      throw std::runtime_error("test_01_noise_only_artifact: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   // BranchSelector с откалиброванными порогами: шум должен быть Low.
   dsp::stats::BranchSelector selector;
   auto branch = selector.Select(result.snr_db_global, cfg.thresholds);
-  assert(branch == dsp::stats::BranchType::Low);
+  {
+    auto v = gpu_test_utils::ScalarEqError(
+        static_cast<int>(branch),
+        static_cast<int>(dsp::stats::BranchType::Low),
+        "branch_is_low_for_noise");
+    if (!v.passed) {
+      throw std::runtime_error("test_01_noise_only_artifact: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_01] PASS — snr_db=" + std::to_string(result.snr_db_global));
 }
@@ -90,7 +115,14 @@ inline void test_02_basic_signal() {
 
   // SNR_fft = SNR_in + 10·log10(N_actual) ≈ 20 + 32 = 52 dB.
   // С учётом Hann processing loss ~1.76 dB и CFAR bias ~−5 dB: 40-55 dB диапазон.
-  assert(result.snr_db_global > 38.0f);
+  {
+    auto v = gpu_test_utils::LowerBoundError(
+        result.snr_db_global, 38.0f, "snr_db_basic_signal");
+    if (!v.passed) {
+      throw std::runtime_error("test_02_basic_signal: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_02] PASS — snr_db=" + std::to_string(result.snr_db_global));
 }
@@ -108,20 +140,24 @@ inline void test_03_negative_freq() {
   auto signal = snr_test_helpers::MakeDechirpedCW(n_samp, /*freq_norm=*/-0.2f, /*A=*/10.0f);
   snr_test_helpers::AddNoise(signal, /*noise_power=*/1.0f, /*seed=*/42u);
 
-  // Full spectrum: peak находится в отрицательной части — SNR должен быть высокий.
-  dsp::stats::SnrEstimationConfig cfg_full;
-  cfg_full.search_full_spectrum = true;
-  auto r_full = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg_full);
-  assert(r_full.snr_db_global > 30.0f);
+  // Дефолт `search_full_spectrum = true` — CFAR ищет пик по всему спектру.
+  // Для radar это единственно корректный режим: знак Doppler / направление цели
+  // заранее неизвестны, цель может оказаться на любой стороне FFT (в т.ч. на
+  // отрицательной нормированной частоте, как здесь). Поэтому проверка
+  // `search_full_spectrum=false` (legacy half-search) удалена 2026-05-14 как
+  // anti-pattern: для radar half-search теряет половину сцены.
+  dsp::stats::SnrEstimationConfig cfg;  // search_full_spectrum=true по умолчанию
+  auto result = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg);
+  {
+    auto v = gpu_test_utils::LowerBoundError(
+        result.snr_db_global, 30.0f, "snr_db_neg_freq_full_spectrum");
+    if (!v.passed) {
+      throw std::runtime_error("test_03_negative_freq: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
-  // Только [0..nFFT/2): пик в отрицательной части пропускается — CFAR видит только шум.
-  dsp::stats::SnrEstimationConfig cfg_half;
-  cfg_half.search_full_spectrum = false;
-  auto r_half = proc.ComputeSnrDb(signal, n_ant, n_samp, cfg_half);
-  assert(r_half.snr_db_global < 18.0f);
-
-  TestPrint("[test_03] PASS — full=" + std::to_string(r_full.snr_db_global) +
-            " half=" + std::to_string(r_half.snr_db_global));
+  TestPrint("[test_03] PASS — snr_db=" + std::to_string(result.snr_db_global));
 }
 
 // ============================================================================
@@ -152,9 +188,23 @@ inline void test_04_scenario_a() {
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
   // n_ant_out = ceil(2500 / 50) = 50
-  assert(result.used_antennas == 50u);
+  {
+    auto v = gpu_test_utils::ScalarEqError(
+        result.used_antennas, 50u, "used_antennas_scenario_a");
+    if (!v.passed) {
+      throw std::runtime_error("test_04_scenario_a: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
   // SNR_in=15 dB + 10·log10(2500) ≈ 15 + 34 = 49 dB, с bias → 35-52 dB
-  assert(result.snr_db_global > 30.0f && result.snr_db_global < 55.0f);
+  {
+    auto v = gpu_test_utils::InRangeError(
+        result.snr_db_global, 30.0f, 55.0f, "snr_db_global_scenario_a");
+    if (!v.passed) {
+      throw std::runtime_error("test_04_scenario_a: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_04] PASS — snr_db=" + std::to_string(result.snr_db_global) +
             " used_ant=" + std::to_string(result.used_antennas));
@@ -197,10 +247,24 @@ inline void test_05_scenario_b() {
   snr_test_helpers::FreeGpu(gpu_data);
 
   // n_ant_out = ceil(256 / 6) = 43
-  assert(result.used_antennas == 43u);
+  {
+    auto v = gpu_test_utils::ScalarEqError(
+        result.used_antennas, 43u, "used_antennas_scenario_b");
+    if (!v.passed) {
+      throw std::runtime_error("test_05_scenario_b: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
   // SNR_in = 10 dB (A=3.2, σ²=1 → A²/σ² ≈ 10) + 10·log10(~1666) ≈ 10 + 32 = 42 dB
   // После CFAR bias и Hann loss: > 25 dB
-  assert(result.snr_db_global > 25.0f);
+  {
+    auto v = gpu_test_utils::LowerBoundError(
+        result.snr_db_global, 25.0f, "snr_db_scenario_b");
+    if (!v.passed) {
+      throw std::runtime_error("test_05_scenario_b: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_05] PASS — snr_db=" + std::to_string(result.snr_db_global) +
             " used_ant=" + std::to_string(result.used_antennas));
@@ -237,7 +301,14 @@ inline void test_06_scenario_b_noise() {
   snr_test_helpers::FreeGpu(gpu_data);
 
   // Только noise → CFAR artifact ≈ 8-15 dB
-  assert(result.snr_db_global > 3.0f && result.snr_db_global < 18.0f);
+  {
+    auto v = gpu_test_utils::InRangeError(
+        result.snr_db_global, 3.0f, 18.0f, "snr_db_scenario_b_noise");
+    if (!v.passed) {
+      throw std::runtime_error("test_06_scenario_b_noise: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_06] PASS — snr_db=" + std::to_string(result.snr_db_global));
 }
@@ -271,9 +342,23 @@ inline void test_06b_scenario_c() {
   auto result = proc.ComputeSnrDb(data, n_ant, n_samp, cfg);
 
   // n_ant_out = ceil(9000 / 180) = 50
-  assert(result.used_antennas == 50u);
+  {
+    auto v = gpu_test_utils::ScalarEqError(
+        result.used_antennas, 50u, "used_antennas_scenario_c");
+    if (!v.passed) {
+      throw std::runtime_error("test_06b_scenario_c: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
   // SNR_in=10 + 10·log10(10000) ≈ 10 + 40 = 50 dB, с bias → > 30
-  assert(result.snr_db_global > 30.0f);
+  {
+    auto v = gpu_test_utils::LowerBoundError(
+        result.snr_db_global, 30.0f, "snr_db_scenario_c");
+    if (!v.passed) {
+      throw std::runtime_error("test_06b_scenario_c: " +
+                               v.metric_name + " " + v.message);
+    }
+  }
 
   TestPrint("[test_06b] PASS — snr_db=" + std::to_string(result.snr_db_global) +
             " used_ant=" + std::to_string(result.used_antennas));
@@ -292,15 +377,32 @@ inline void run_all() {
     return;
   }
 
-  test_01_noise_only_artifact();
-  test_02_basic_signal();
-  test_03_negative_freq();
-  test_04_scenario_a();
-  test_05_scenario_b();
-  test_06_scenario_b_noise();
-  test_06b_scenario_c();
+  // Wrap each test in try/catch — один FAIL не должен валить остальные.
+  // Включено 2026-05-14 после миграции ranges на gpu_test_utils::InRangeError
+  // (бросает std::runtime_error). Single-bound assert'ы при failure всё ещё
+  // abort'ят процесс — это известное поведение <cassert>.
+  int passed = 0, failed = 0;
+  auto run = [&](const std::string& name, void (*fn)()) {
+    try {
+      fn();
+      ++passed;
+    } catch (const std::exception& e) {
+      ++failed;
+      TestPrint("[FAIL] " + name + ": " + e.what());
+    }
+  };
 
-  TestPrint("=== SNR Estimator Tests DONE ===");
+  run("test_01_noise_only_artifact",  &test_01_noise_only_artifact);
+  run("test_02_basic_signal",         &test_02_basic_signal);
+  run("test_03_negative_freq",        &test_03_negative_freq);
+  run("test_04_scenario_a",           &test_04_scenario_a);
+  run("test_05_scenario_b",           &test_05_scenario_b);
+  run("test_06_scenario_b_noise",     &test_06_scenario_b_noise);
+  run("test_06b_scenario_c",          &test_06b_scenario_c);
+
+  TestPrint("=== SNR Estimator Tests DONE: " +
+            std::to_string(passed) + " passed, " +
+            std::to_string(failed) + " failed ===");
 }
 
 }  // namespace test_snr_estimator_rocm

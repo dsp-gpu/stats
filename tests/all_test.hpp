@@ -41,9 +41,10 @@ inline void run() {
   // ComputeAll benchmark (раскомментировать для профилирования):
   // test_statistics_compute_all_benchmark::run();
 
-  // SNR-estimator: написано 2026-04-09, запуск в понедельник на Debian/AMD
-  // test_snr_estimator_rocm::run_all();
-  // test_snr_estimator_benchmark::run_benchmark();
+  // SNR-estimator: написано 2026-04-09, активировано 2026-05-14 после
+  // миграции assert(...range...) на gpu_test_utils::InRangeError.
+  test_snr_estimator_rocm::run_all();
+  // test_snr_estimator_benchmark::run_benchmark();  // benchmark включать отдельно
 #endif
 }
 
