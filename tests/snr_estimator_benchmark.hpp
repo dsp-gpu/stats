@@ -40,7 +40,6 @@ namespace test_snr_estimator {
  * @class SnrEstimatorBenchmark
  * @brief GpuBenchmarkBase-наследник для замера ComputeSnrDb() через hipEvent.
  *
- * @note ROCm-only (#if ENABLE_ROCM). Caller владеет pre-allocated gpu_input.
  * @see drv_gpu_lib::GpuBenchmarkBase, dsp::stats::StatisticsProcessor::ComputeSnrDb
  */
 class SnrEstimatorBenchmark : public drv_gpu_lib::GpuBenchmarkBase {

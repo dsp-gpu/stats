@@ -59,7 +59,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 Op: иерархический complex mean per-beam (Phase 1 + Phase 2).
  *
  * @note Stateless по семантике (private reduce_buf — кэш аллокации).
- * @note Требует #if ENABLE_ROCM. Зависит от kernels mean_reduce_phase1/_final.
  * @see drv_gpu_lib::GpuKernelOp — базовый Layer 3.
  * @see ::dsp::stats::WelfordFusedOp — single-pass mean+var+std (без отдельного MeanOp).
  */

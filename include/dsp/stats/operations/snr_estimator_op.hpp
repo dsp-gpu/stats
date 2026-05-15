@@ -78,7 +78,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 composite Op: полный SNR-CFAR pipeline (gather → FFT → CFAR → median).
  *
  * @note Owns FFTProcessorROCm (через unique_ptr, SetupFft до Initialize).
- * @note Требует #if ENABLE_ROCM. Зависит от kernels gather_decimated + peak_cfar.
  * @note Калибровано Python Эксп.5 (P_correct=97.9% для Hann + CA-CFAR mean).
  * @note Lifecycle: SetupFft(backend) → Initialize(ctx) → Execute(...) → Release.
  * @see ::dsp::stats::BranchSelector — классификация result.snr_db_global → Low/Mid/High.

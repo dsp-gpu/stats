@@ -68,7 +68,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 Op: медиана |z| через rocPRIM segmented radix sort (универсальный путь).
  *
  * @note Lazy + cached buffer allocation (BufferSet<3>: sort_buf, sort_temp, offsets).
- * @note Требует #if ENABLE_ROCM. Зависит от rocPRIM (через ::dsp::stats::gpu_sort::ExecuteSort).
  * @note Эффективен для n_point ≤ kHistogramThreshold (≈100K). Для больших — Histogram-варианты.
  * @note Two paths: Execute (complex input) + ExecuteFloat (магнитуды готовы).
  * @see ::dsp::stats::gpu_sort::ExecuteSort — rocPRIM-обёртка (компилируется hipcc).

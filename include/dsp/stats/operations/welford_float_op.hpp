@@ -53,7 +53,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 Op: Welford по уже-вычисленным float magnitudes.
  *
  * @note Stateless (BufferSet<0>, all temp в LDS).
- * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_float`.
  * @note mean_re/mean_im в выходе ВСЕГДА 0 (вход не комплексный).
  * @see ::dsp::stats::WelfordFusedOp — аналог по complex-входу (single-pass).
  */

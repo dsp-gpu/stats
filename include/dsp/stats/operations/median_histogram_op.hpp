@@ -65,7 +65,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 Op: точная медиана через 4-pass byte-histogram (float input).
  *
  * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
- * @note Требует #if ENABLE_ROCM. Зависит от kernels histogram_median_pass + find_median_bucket.
  * @note Эффективен для n_point > kHistogramThreshold (≈100K). Для меньших — MedianRadixSortOp.
  * @see ::dsp::stats::MedianHistogramComplexOp — то же на complex-input (без отдельного |z|).
  * @see ::dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort (быстрее на малых n).

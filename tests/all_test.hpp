@@ -4,7 +4,7 @@
 // stats_all_test — агрегатор тестов модуля stats
 //
 // ЧТО:    Единая точка подключения всех test_*.hpp модуля stats.
-//         Все тесты под #if ENABLE_ROCM.
+//         Все тесты ROCm-only.
 // ЗАЧЕМ:  main.cpp вызывает только этот файл — не отдельные test_*.hpp.
 //         Закомментированный include = выключенный тест без правки main.cpp.
 // ПОЧЕМУ: Паттерн all_test.hpp (правило 15-cpp-testing.md).
@@ -16,7 +16,7 @@
  * @file all_test.hpp
  * @brief Индекс тестов модуля stats — единая точка включения для main.cpp.
  * @note Test fixture, не публичный API. Запускается через main.cpp → statistics_all_test::run().
- *       ROCm-only: все тесты под #if ENABLE_ROCM. Закомментированные include — отключённые сценарии.
+ *       ROCm-only: все тесты ROCm-only. Закомментированные include — отключённые сценарии.
  */
 
 #include "test_statistics_rocm.hpp"

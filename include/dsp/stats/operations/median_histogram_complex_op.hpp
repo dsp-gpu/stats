@@ -57,7 +57,6 @@ namespace dsp::stats {
  *
  * @note Не аллоцирует промежуточный |z|-буфер — экономия памяти vs Magnitudes+Histogram.
  * @note Lazy-alloc private buffers (BufferSet<3>: hist, prefix, value).
- * @note Требует #if ENABLE_ROCM. Kernels: histogram_median_pass_complex + find_median_bucket.
  * @see ::dsp::stats::MedianHistogramOp — аналог по уже-вычисленным float magnitudes.
  * @see ::dsp::stats::MedianRadixSortOp — альтернатива через rocPRIM sort.
  */

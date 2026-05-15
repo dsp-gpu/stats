@@ -35,7 +35,6 @@ namespace test_statistics_compute_all_benchmark {
  * @class ComputeAllBenchmarkROCm
  * @brief GpuBenchmarkBase-наследник: замер ComputeAll() с per-stage breakdown.
  *
- * @note ROCm-only (#if ENABLE_ROCM).
  * @see drv_gpu_lib::GpuBenchmarkBase, dsp::stats::StatisticsProcessor::ComputeAll
  */
 class ComputeAllBenchmarkROCm : public drv_gpu_lib::GpuBenchmarkBase {

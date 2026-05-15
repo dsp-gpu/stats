@@ -90,7 +90,6 @@ using StatisticsROCmProfEvents =
  * @brief Layer 6 Ref03 Facade: per-beam статистика (mean / median / Welford / SNR) на ROCm.
  *
  * @note Move-only (copy=delete, move noexcept). Owns GpuContext, Op'ы, FFTProcessorROCm.
- * @note Требует #if ENABLE_ROCM. Backend* — non-owning (передаётся снаружи).
  * @note PUBLIC API НЕ меняется — Python bindings (py_statistics.hpp) стабильны.
  * @see ::dsp::stats::BranchSelector — stateful классификатор Low/Mid/High по SNR.
  * @see ::dsp::stats::shared_buf — слоты GpuContext для этого модуля.

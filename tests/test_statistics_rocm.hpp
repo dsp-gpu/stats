@@ -7,7 +7,7 @@
 //         ComputeAll (CPU/GPU/Float/edge cases), GPU vs CPU timing.
 // ЗАЧЕМ:  StatisticsProcessor — центральный модуль stats. 15 сценариев
 //         покрывают все ветки MedianStrategy и Welford corner cases.
-// ПОЧЕМУ: Эталон CppTest-06. test_utils. ENABLE_ROCM.
+// ПОЧЕМУ: Эталон CppTest-06. test_utils. ROCm-only.
 //
 // История: Создан: 2026-04-12
 // ============================================================================

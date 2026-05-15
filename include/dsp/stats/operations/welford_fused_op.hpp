@@ -53,7 +53,6 @@ namespace dsp::stats {
  * @brief Layer 5 Ref03 Op: single-pass Welford по complex-входу (online mean+var+std).
  *
  * @note Stateless (BufferSet<0>, нет private buffers).
- * @note Требует #if ENABLE_ROCM. Зависит от kernel `welford_fused`.
  * @note Численно устойчив (online Welford vs naive sum(x²)−(sum(x))²/n).
  * @see ::dsp::stats::WelfordFloatOp — аналог по уже-вычисленным float magnitudes.
  * @see ::dsp::stats::MeanReductionOp — отдельный mean (если нужно ТОЛЬКО среднее).
