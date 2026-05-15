@@ -20,7 +20,6 @@
  *       Запуск на Debian/AMD (нет GPU под Windows).
  */
 
-#if ENABLE_ROCM
 
 #include "snr_test_helpers.hpp"
 #include <dsp/stats/statistics_processor.hpp>
@@ -407,4 +406,3 @@ inline void run_all() {
 
 }  // namespace test_snr_estimator_rocm
 
-#endif  // ENABLE_ROCM

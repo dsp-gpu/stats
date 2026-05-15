@@ -19,7 +19,6 @@
 // История: Создан: 2026-03-20
 // ============================================================================
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
 #include <core/services/gpu_benchmark_base.hpp>
@@ -75,4 +74,3 @@ private:
 
 }  // namespace test_statistics_compute_all_benchmark
 
-#endif  // ENABLE_ROCM

@@ -45,7 +45,6 @@
 //   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
 // ============================================================================
 
-#if ENABLE_ROCM
 
 #include <core/services/gpu_kernel_op.hpp>
 #include <core/services/buffer_set.hpp>
@@ -199,4 +198,3 @@ private:
 
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM

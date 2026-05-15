@@ -11,7 +11,6 @@
  * @date 2026-02-23 (v1), 2026-03-14 (v2 Ref03 Facade)
  */
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
 #include <dsp/stats/kernels/statistics_kernels_rocm.hpp>
@@ -820,4 +819,3 @@ SnrEstimationResult StatisticsProcessor::ComputeSnrDb(
 
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM

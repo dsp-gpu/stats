@@ -22,7 +22,6 @@
  * @see statistics_compute_all_benchmark.hpp, TASK_statistics_compute_all.md
  */
 
-#if ENABLE_ROCM
 
 #include "statistics_compute_all_benchmark.hpp"
 #include <core/backends/rocm/rocm_backend.hpp>
@@ -122,4 +121,3 @@ inline int run() {
 
 }  // namespace test_statistics_compute_all_benchmark
 
-#endif  // ENABLE_ROCM

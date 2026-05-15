@@ -21,7 +21,6 @@
  *       Мигрирован на test_utils (CppTest-06 etalon).
  */
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
 #include <core/backends/rocm/rocm_backend.hpp>
@@ -518,4 +517,3 @@ inline void run() {
 
 }  // namespace test_statistics_rocm
 
-#endif  // ENABLE_ROCM

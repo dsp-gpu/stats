@@ -20,7 +20,6 @@
  *       CPU vector 2.66 GB убил бы RAM.
  */
 
-#if ENABLE_ROCM
 
 #include "snr_estimator_benchmark.hpp"
 #include "snr_test_helpers.hpp"
@@ -145,4 +144,3 @@ inline void run_benchmark() {
 
 }  // namespace test_snr_estimator_benchmark
 
-#endif  // ENABLE_ROCM

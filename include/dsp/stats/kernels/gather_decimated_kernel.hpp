@@ -22,7 +22,6 @@
  *   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
  */
 
-#if ENABLE_ROCM
 
 namespace dsp::stats {
 namespace kernels {
@@ -81,4 +80,3 @@ extern "C" __global__ void gather_decimated(
 }  // namespace kernels
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM

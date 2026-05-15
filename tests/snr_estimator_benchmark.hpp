@@ -19,7 +19,6 @@
 // История: Создан: 2026-04-09
 // ============================================================================
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
 #include "snr_test_helpers.hpp"
@@ -109,4 +108,3 @@ private:
 
 }  // namespace test_snr_estimator
 
-#endif  // ENABLE_ROCM

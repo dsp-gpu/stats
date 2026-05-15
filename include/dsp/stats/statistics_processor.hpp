@@ -58,7 +58,6 @@
 //   - Изменён: 2026-04-09 (SNR_06: добавлены ComputeSnrDb + SnrEstimatorOp)
 // ============================================================================
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_types.hpp>
 #include <core/interface/gpu_context.hpp>
@@ -473,4 +472,3 @@ private:
 
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM

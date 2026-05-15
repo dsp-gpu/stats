@@ -18,7 +18,6 @@
  * @date 2026-02-24
  */
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_sort_gpu.hpp>
 
@@ -89,4 +88,3 @@ hipError_t ExecuteSort(
 } // namespace gpu_sort
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM

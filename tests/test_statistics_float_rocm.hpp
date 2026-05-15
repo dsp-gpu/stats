@@ -21,7 +21,6 @@
  *       Мигрирован на test_utils (CppTest-06).
  */
 
-#if ENABLE_ROCM
 
 #include <dsp/stats/statistics_processor.hpp>
 #include <dsp/spectrum/complex_to_mag_phase_rocm.hpp>
@@ -241,4 +240,3 @@ inline void run() {
 
 }  // namespace test_statistics_float_rocm
 
-#endif  // ENABLE_ROCM

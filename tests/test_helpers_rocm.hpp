@@ -20,7 +20,6 @@
  *       Caller владеет указателем — обязан вызвать hipFree() после использования.
  */
 
-#if ENABLE_ROCM
 
 #include <core/interface/input_data.hpp>
 
@@ -70,4 +69,3 @@ inline drv_gpu_lib::InputData<void*> MakeManagedMagnitudeInput(
 
 }  // namespace test_helpers_rocm
 
-#endif  // ENABLE_ROCM

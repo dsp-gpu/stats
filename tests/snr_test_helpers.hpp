@@ -18,7 +18,6 @@
  *       Используется test_snr_estimator_rocm.hpp + snr_estimator_benchmark.hpp.
  */
 
-#if ENABLE_ROCM
 
 #include <core/backends/rocm/rocm_backend.hpp>
 #include <core/backends/rocm/rocm_core.hpp>
@@ -145,4 +144,3 @@ inline drv_gpu_lib::IBackend* GetTestBackend() {
 
 }  // namespace snr_test_helpers
 
-#endif  // ENABLE_ROCM

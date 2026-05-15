@@ -13,10 +13,8 @@
 
 #include "py_helpers.hpp"
 
-#if ENABLE_ROCM
 #include "py_gpu_context.hpp"
 #include "py_statistics.hpp"
-#endif
 
 PYBIND11_MODULE(dsp_stats, m) {
     m.doc() = "dsp::stats — statistics on GPU (ROCm)\n\n"
@@ -24,10 +22,8 @@ PYBIND11_MODULE(dsp_stats, m) {
               "  ROCmGPUContext          - GPU context (AMD ROCm)\n"
               "  StatisticsProcessor     - Welford/median/SNR estimator\n";
 
-#if ENABLE_ROCM
     // ROCmGPUContext зарегистрирован в dsp_core (один раз глобально).
     py::module_::import("dsp_core");
 
     register_statistics(m);
-#endif
 }

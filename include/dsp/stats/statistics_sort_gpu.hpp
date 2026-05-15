@@ -37,7 +37,6 @@
 //   - Изменён: 2026-05-01 (унификация формата шапки под dsp-asst RAG-индексер)
 // ============================================================================
 
-#if ENABLE_ROCM
 
 #include <hip/hip_runtime.h>
 #include <cstddef>
@@ -100,4 +99,3 @@ hipError_t ExecuteSort(
 } // namespace gpu_sort
 } // namespace dsp::stats
 
-#endif  // ENABLE_ROCM
